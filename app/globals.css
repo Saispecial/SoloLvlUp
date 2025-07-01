@@ -1,0 +1,774 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base theme variables */
+:root {
+  --color-primary: 59 130 246;
+  --color-secondary: 55 65 81;
+  --color-accent: 96 165 250;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 243 244 246;
+  --color-border: 55 65 81;
+  --color-success: 34 197 94;
+  --color-warning: 245 158 11;
+  --color-error: 239 68 68;
+}
+
+/* Theme: Classic Dark */
+.theme-classic-dark {
+  --color-primary: 59 130 246;
+  --color-secondary: 55 65 81;
+  --color-accent: 96 165 250;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 243 244 246;
+  --color-border: 55 65 81;
+}
+
+/* Theme: Cyberpunk Neon */
+.theme-cyberpunk-neon {
+  --color-primary: 168 85 247;
+  --color-secondary: 88 28 135;
+  --color-accent: 196 181 253;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 237 233 254;
+  --color-border: 126 34 206;
+}
+
+/* Theme: Deep Space */
+.theme-deep-space {
+  --color-primary: 99 102 241;
+  --color-secondary: 49 46 129;
+  --color-accent: 165 180 252;
+  --color-background: 15 23 42;
+  --color-surface: 30 41 59;
+  --color-text: 224 231 255;
+  --color-border: 99 102 241;
+}
+
+/* Theme: Inferno Red */
+.theme-inferno-red {
+  --color-primary: 239 68 68;
+  --color-secondary: 127 29 29;
+  --color-accent: 248 113 113;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 254 226 226;
+  --color-border: 185 28 28;
+}
+
+/* Theme: Emerald Forest */
+.theme-emerald-forest {
+  --color-primary: 16 185 129;
+  --color-secondary: 6 78 59;
+  --color-accent: 52 211 153;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 209 250 229;
+  --color-border: 16 185 129;
+}
+
+/* Theme: Royal Purple */
+.theme-royal-purple {
+  --color-primary: 139 92 246;
+  --color-secondary: 76 29 149;
+  --color-accent: 196 181 253;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 237 233 254;
+  --color-border: 139 92 246;
+}
+
+/* Theme: Crimson Dawn */
+.theme-crimson-dawn {
+  --color-primary: 244 63 94;
+  --color-secondary: 136 19 55;
+  --color-accent: 251 113 133;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 255 228 230;
+  --color-border: 244 63 94;
+}
+
+/* Theme: Ocean Breeze */
+.theme-ocean-breeze {
+  --color-primary: 6 182 212;
+  --color-secondary: 22 78 99;
+  --color-accent: 103 232 249;
+  --color-background: 15 23 42;
+  --color-surface: 30 41 59;
+  --color-text: 207 250 254;
+  --color-border: 6 182 212;
+}
+
+/* Theme: Sunset Orange */
+.theme-sunset-orange {
+  --color-primary: 249 115 22;
+  --color-secondary: 154 52 18;
+  --color-accent: 251 146 60;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 255 237 213;
+  --color-border: 249 115 22;
+}
+
+/* Theme: Golden Dawn */
+.theme-golden-dawn {
+  --color-primary: 234 179 8;
+  --color-secondary: 133 77 14;
+  --color-accent: 250 204 21;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 254 249 195;
+  --color-border: 234 179 8;
+}
+
+/* Theme: Neon Yellow */
+.theme-neon-yellow {
+  --color-primary: 253 224 71;
+  --color-secondary: 133 77 14;
+  --color-accent: 254 240 138;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 255 251 235;
+  --color-border: 202 138 4;
+}
+
+/* Theme: Dark Forest */
+.theme-dark-forest {
+  --color-primary: 21 128 61;
+  --color-secondary: 20 83 45;
+  --color-accent: 34 197 94;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 220 252 231;
+  --color-border: 22 163 74;
+}
+
+/* Theme: Deep Cyan */
+.theme-deep-cyan {
+  --color-primary: 14 116 144;
+  --color-secondary: 22 78 99;
+  --color-accent: 34 211 238;
+  --color-background: 17 24 39;
+  --color-surface: 31 41 55;
+  --color-text: 207 250 254;
+  --color-border: 22 163 74;
+}
+
+/* Base styles with futuristic enhancements */
+body {
+  background: radial-gradient(ellipse at top, rgba(0, 100, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom, rgba(255, 0, 150, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, rgb(var(--color-background)) 0%, rgba(0, 0, 0, 0.9) 100%);
+  color: rgb(var(--color-text));
+  transition: all 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 767px) {
+  body {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .main-container {
+    padding: 0;
+  }
+
+  /* Touch-friendly button sizes */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Larger tap targets for mobile */
+  .btn-primary,
+  .btn-secondary {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  /* Mobile-optimized cards */
+  .card-themed {
+    margin: 0 16px;
+    border-radius: 12px;
+  }
+
+  /* Improved mobile typography */
+  h1 {
+    font-size: 1.75rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+  }
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  /* Mobile-specific spacing */
+  .space-y-4 > * + * {
+    margin-top: 1rem;
+  }
+
+  .space-y-6 > * + * {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Tablet responsive design */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .main-container {
+    padding: 1rem;
+  }
+
+  /* Tablet grid adjustments */
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Desktop enhancements */
+@media (min-width: 1024px) {
+  /* 3D effects only on desktop */
+  .card-3d {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-3d::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .card-3d:hover::before {
+    left: 100%;
+  }
+}
+
+/* Line clamp utility for mobile */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* CSS-only animations */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Enhanced utility classes */
+@layer utilities {
+  .bg-themed-primary {
+    background-color: rgb(var(--color-primary));
+  }
+
+  .bg-themed-secondary {
+    background-color: rgb(var(--color-secondary));
+  }
+
+  .bg-themed-accent {
+    background-color: rgb(var(--color-accent));
+  }
+
+  .bg-themed-background {
+    background-color: rgb(var(--color-background));
+  }
+
+  .bg-themed-surface {
+    background-color: rgb(var(--color-surface));
+  }
+
+  .text-themed-primary {
+    color: rgb(var(--color-primary));
+  }
+
+  .text-themed-secondary {
+    color: rgb(var(--color-secondary));
+  }
+
+  .text-themed-accent {
+    color: rgb(var(--color-accent));
+  }
+
+  .text-themed-text {
+    color: rgb(var(--color-text));
+  }
+
+  .border-themed-primary {
+    border-color: rgb(var(--color-primary));
+  }
+
+  .border-themed-secondary {
+    border-color: rgb(var(--color-secondary));
+  }
+
+  .border-themed-accent {
+    border-color: rgb(var(--color-accent));
+  }
+
+  .border-themed-border {
+    border-color: rgb(var(--color-border));
+  }
+
+  .hover\:bg-themed-primary:hover {
+    background-color: rgb(var(--color-primary) / 0.9);
+  }
+
+  .hover\:bg-themed-accent:hover {
+    background-color: rgb(var(--color-accent) / 0.9);
+  }
+
+  .bg-themed-primary\/10 {
+    background-color: rgb(var(--color-primary) / 0.1);
+  }
+
+  .bg-themed-accent\/10 {
+    background-color: rgb(var(--color-accent) / 0.1);
+  }
+
+  .border-themed-primary\/30 {
+    border-color: rgb(var(--color-primary) / 0.3);
+  }
+
+  .border-themed-accent\/30 {
+    border-color: rgb(var(--color-accent) / 0.3);
+  }
+
+  /* CSS-only effects */
+  .glass-morphism {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .neon-glow {
+    box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor;
+  }
+
+  .holographic {
+    background: linear-gradient(45deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1), rgba(255, 255, 0, 0.1));
+    animation: pulse-glow 3s infinite;
+  }
+
+  .floating {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  /* Enhanced animation classes */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-shine {
+    animation: shine 2s infinite linear;
+  }
+}
+
+/* Enhanced component styles */
+.quest-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.quest-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+/* Mobile quest card adjustments */
+@media (max-width: 767px) {
+  .quest-card:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: scale(1.05) rotateY(5deg);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile stat card adjustments */
+@media (max-width: 767px) {
+  .stat-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.achievement-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.achievement-card.unlocked {
+  border-color: rgb(var(--color-success));
+  background: rgba(34, 197, 94, 0.1);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+.progress-bar {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.1) 10px,
+    rgba(255, 255, 255, 0.1) 11px
+  );
+  pointer-events: none;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, rgb(var(--color-primary)), rgb(var(--color-accent)));
+  height: 100%;
+  transition: width 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shine 2s infinite linear;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-accent)));
+  color: white;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgb(var(--color-primary) / 0.5);
+}
+
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgb(var(--color-text));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgb(var(--color-accent));
+  transform: translateY(-2px);
+}
+
+.input-themed {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgb(var(--color-text));
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.input-themed:focus {
+  outline: none;
+  border-color: rgb(var(--color-primary));
+  box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.2), 0 0 20px rgb(var(--color-primary) / 0.3);
+}
+
+.card-themed {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tabs-themed {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-trigger {
+  color: rgb(var(--color-text) / 0.7);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tab-trigger[data-state="active"] {
+  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-accent)));
+  color: white;
+  box-shadow: 0 0 20px rgb(var(--color-primary) / 0.5);
+}
+
+.theme-selector {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-selector:hover {
+  border-color: rgb(var(--color-accent));
+  transform: translateY(-2px);
+}
+
+.theme-selector.selected {
+  border-color: rgb(var(--color-primary));
+  background: rgb(var(--color-primary) / 0.1);
+  box-shadow: 0 0 20px rgb(var(--color-primary) / 0.3);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-accent)));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgb(var(--color-accent)), rgb(var(--color-primary)));
+}
+
+/* Selection styling */
+::selection {
+  background: rgb(var(--color-primary) / 0.3);
+  color: rgb(var(--color-text));
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 767px) {
+  /* Prevent zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* Better touch targets */
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Improved mobile spacing */
+  .mobile-padding {
+    padding: 1rem;
+  }
+
+  /* Mobile-friendly modals */
+  .mobile-modal {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .card-themed {
+    border-width: 2px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    border-width: 2px;
+  }
+}
+
+/* Dark mode preferences */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: 17 24 39;
+    --color-surface: 31 41 55;
+    --color-text: 243 244 246;
+  }
+}
