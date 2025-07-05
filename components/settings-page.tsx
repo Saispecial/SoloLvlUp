@@ -21,6 +21,10 @@ import {
   Calendar,
   Clock,
   Mic,
+  Palette,
+  Star,
+  Heart,
+  Zap as Lightning,
 } from "lucide-react"
 import { format } from "date-fns"
 import type { PlayerProfile, Theme } from "@/lib/types"
@@ -65,6 +69,11 @@ export function SettingsPage({ player, onUpdateName, onThemeChange, onReset }: S
     { id: "neon-yellow", name: "Neon Yellow", icon: Sparkles, description: "Vibrant electric yellow glow" },
     { id: "dark-forest", name: "Dark Forest", icon: TreePine, description: "Deep emerald forest theme" },
     { id: "deep-cyan", name: "Deep Cyan", icon: Droplet, description: "Rich dark cyan waters" },
+    { id: "aurora-borealis", name: "Aurora Borealis", icon: Star, description: "Northern lights green glow" },
+    { id: "midnight-storm", name: "Midnight Storm", icon: Lightning, description: "Dark stormy indigo theme" },
+    { id: "cosmic-purple", name: "Cosmic Purple", icon: Palette, description: "Deep space purple theme" },
+    { id: "neon-pink", name: "Neon Pink", icon: Heart, description: "Vibrant pink neon theme" },
+    { id: "golden-sunset", name: "Golden Sunset", icon: Sunset, description: "Warm golden sunset theme" },
   ] as const
 
   const handleReset = () => {
@@ -187,7 +196,7 @@ export function SettingsPage({ player, onUpdateName, onThemeChange, onReset }: S
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-themed-text">Theme Selection</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {themes.map(({ id, name: themeName, icon: Icon, description }) => (
             <button
               key={id}

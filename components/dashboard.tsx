@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useImperativeHandle, forwardRef } from "react"
 import { generateQuests } from "@/lib/gemini-api"
 import { usePlayerStore } from "@/stores/player-store"
 import { MobileNavigation } from "./mobile-navigation"
@@ -14,6 +14,7 @@ import { MobileQuestCard } from "./mobile-quest-card"
 import { ResponsiveCard } from "./responsive-card"
 import { ParticleBackground } from "./particle-background"
 import { FloatingElements } from "./floating-elements"
+import { AnalyticsDashboard } from "./analytics-dashboard"
 import { motion } from "framer-motion"
 
 import { Plus, Sparkles } from "lucide-react"
@@ -23,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 
-export default function Dashboard() {
+const Dashboard = forwardRef(function Dashboard(props, ref) {
   const {
     player,
     quests,
@@ -95,6 +96,7 @@ export default function Dashboard() {
   }
 
   const activeQuests = quests.filter((q) => !q.completed)
+  console.log('[Dashboard] Current quests:', quests)
 
   const handleReflectionSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -109,6 +111,17 @@ export default function Dashboard() {
     setCurrentChallenges("")
     setMotivationLevel("")
   }
+
+  useImperativeHandle(ref, () => ({
+    setActiveTab,
+    generateNewQuests,
+    setShowQuestForm,
+    setEditingQuest,
+    setReflection,
+    handleQuestSubmit,
+    handleReflectionSubmit,
+    // Add more actions as needed
+  }))
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -334,6 +347,17 @@ export default function Dashboard() {
           </motion.div>
         )
 
+      case "analytics":
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`${isMobile ? "pb-24 px-4" : ""}`}
+          >
+            <AnalyticsDashboard isMobile={isMobile} />
+          </motion.div>
+        )
+
       case "settings":
         return (
           <motion.div
@@ -388,4 +412,6 @@ export default function Dashboard() {
       </motion.div>
     </ResponsiveLayout>
   )
-}
+})
+
+export default Dashboard

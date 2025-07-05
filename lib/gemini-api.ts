@@ -54,3 +54,22 @@ export async function generateQuests(
     }
   }
 }
+
+export async function getGeminiInsight(prompt: string, playerProfile?: PlayerProfile): Promise<string> {
+  try {
+    const body = playerProfile ? { prompt, player: playerProfile } : { prompt }
+    const res = await fetch("/api/gemini-nlp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      throw new Error(`API error: ${res.status}`)
+    }
+    const data = await res.json()
+    return data.reply || "No insight available."
+  } catch (error) {
+    console.error("Error getting Gemini insight:", error)
+    return "Sorry, I couldn't get a real-time insight right now."
+  }
+}

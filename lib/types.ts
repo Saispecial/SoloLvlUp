@@ -44,6 +44,11 @@ export type Theme =
   | "neon-yellow"
   | "dark-forest"
   | "deep-cyan"
+  | "aurora-borealis"
+  | "midnight-storm"
+  | "cosmic-purple"
+  | "neon-pink"
+  | "golden-sunset"
 
 export interface Quest {
   id: string
@@ -70,9 +75,10 @@ export interface Achievement {
   unlocked: boolean
   unlockedAt?: Date
   requirement: {
-    type: "level" | "quests_completed" | "streak" | "stat_threshold" | "total_xp"
+    type: "level" | "quests_completed" | "streak" | "stat_threshold" | "total_xp" | "reflection_streak" | "perfect_week" | "realm_master" | "speed_runner" | "consistency_king"
     value: number
     stat?: keyof PlayerStats
+    realm?: Realm
   }
 }
 
@@ -82,6 +88,56 @@ export interface PersonalReflection {
   currentChallenges: string
   motivationLevel: string
   timestamp: Date
+}
+
+// Advanced Analytics Types
+export interface MoodTrend {
+  date: string
+  mood: string
+  emotionalState: string
+  motivationLevel: number
+  questsCompleted: number
+  xpEarned: number
+}
+
+export interface PerformanceMetrics {
+  dailyAverage: {
+    questsCompleted: number
+    xpEarned: number
+    streakDays: number
+  }
+  weeklyStats: {
+    totalQuests: number
+    totalXP: number
+    averageMood: number
+    mostProductiveDay: string
+  }
+  monthlyProgress: {
+    levelUps: number
+    achievementsUnlocked: number
+    statGrowth: Partial<PlayerStats>
+  }
+  realmPerformance: Record<Realm, {
+    questsCompleted: number
+    xpEarned: number
+    averageDifficulty: string
+  }>
+}
+
+export interface DetailedTracking {
+  questHistory: {
+    id: string
+    title: string
+    completedAt: Date
+    timeToComplete: number // in hours
+    difficulty: QuestDifficulty
+    realm: Realm
+    xp: number
+    statBoosts: Partial<PlayerStats>
+  }[]
+  moodHistory: MoodTrend[]
+  performanceMetrics: PerformanceMetrics
+  lastUpdated: Date
 }
 
 export interface GeminiResponse {
