@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 interface Particle {
   x: number
@@ -16,8 +16,13 @@ export function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const particlesRef = useRef<Particle[]>([])
   const animationRef = useRef<number>()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+    
+    if (typeof window === 'undefined') return
+
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -95,18 +100,23 @@ export function ParticleBackground() {
     createParticles()
     animate()
 
-    window.addEventListener("resize", () => {
+    const handleResize = () => {
       resizeCanvas()
       createParticles()
-    })
+    }
+
+    window.addEventListener("resize", handleResize)
 
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
-      window.removeEventListener("resize", resizeCanvas)
+      window.removeEventListener("resize", handleResize)
     }
   }, [])
+
+  // Don't render during SSR
+  if (!mounted) return null
 
   return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" style={{ opacity: 0.3 }} />
 }

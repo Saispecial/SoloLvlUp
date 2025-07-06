@@ -23,14 +23,16 @@ export function EnhancedDashboard({ player, quests, achievements }: EnhancedDash
 
   useEffect(() => {
     const checkMobile = () => {
+      if (typeof window === 'undefined') return
       setIsMobile(window.innerWidth < 768)
     }
 
     checkMobile()
     setMounted(true)
-    window.addEventListener("resize", checkMobile)
-
-    return () => window.removeEventListener("resize", checkMobile)
+    if (typeof window !== 'undefined') {
+      window.addEventListener("resize", checkMobile)
+      return () => window.removeEventListener("resize", checkMobile)
+    }
   }, [isMobile])
 
   if (!mounted) return null

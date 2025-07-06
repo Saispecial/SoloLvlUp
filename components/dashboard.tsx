@@ -60,14 +60,18 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
 
   useEffect(() => {
     const checkMobile = () => {
+      if (typeof window === 'undefined') return
       setIsMobile(window.innerWidth < 768)
     }
 
     checkMobile()
-    document.documentElement.className = `theme-${player.theme}`
-    window.addEventListener("resize", checkMobile)
-
-    return () => window.removeEventListener("resize", checkMobile)
+    if (typeof document !== 'undefined') {
+      document.documentElement.className = `theme-${player.theme}`
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener("resize", checkMobile)
+      return () => window.removeEventListener("resize", checkMobile)
+    }
   }, [player.theme])
 
   const generateNewQuests = async () => {

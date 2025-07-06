@@ -23,17 +23,23 @@ export function ResponsiveCard({
 }: ResponsiveCardProps) {
   const [isMobile, setIsMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+    
     const checkDevice = () => {
+      if (typeof window === 'undefined') return
       const width = window.innerWidth
       setIsMobile(width < 768)
       setIsTablet(width >= 768 && width < 1024)
     }
 
     checkDevice()
-    window.addEventListener("resize", checkDevice)
-    return () => window.removeEventListener("resize", checkDevice)
+    if (typeof window !== 'undefined') {
+      window.addEventListener("resize", checkDevice)
+      return () => window.removeEventListener("resize", checkDevice)
+    }
   }, [])
 
   const paddingClasses = {
@@ -64,6 +70,24 @@ export function ResponsiveCard({
             transition: { duration: 0.2 },
           }
         : {},
+  }
+
+  // Return a default card during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <motion.div
+        className={`card-themed rounded-xl transition-all duration-300 p-6 ${className}`}
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        style={{
+          transformStyle: "preserve-3d",
+          perspective: "1000px",
+        }}
+      >
+        {children}
+      </motion.div>
+    )
   }
 
   return (

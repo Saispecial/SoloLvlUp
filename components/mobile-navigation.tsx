@@ -12,6 +12,7 @@ interface MobileNavigationProps {
 export function MobileNavigation({ activeTab, onTabChange }: MobileNavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   const tabs = [
     { id: "dashboard", label: "Dashboard", icon: Home },
@@ -24,13 +25,18 @@ export function MobileNavigation({ activeTab, onTabChange }: MobileNavigationPro
   ]
 
   useEffect(() => {
+    setMounted(true)
+    
     const checkMobile = () => {
+      if (typeof window === 'undefined') return
       setIsMobile(window.innerWidth < 768)
     }
 
     checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
+    if (typeof window !== 'undefined') {
+      window.addEventListener("resize", checkMobile)
+      return () => window.removeEventListener("resize", checkMobile)
+    }
   }, [])
 
   const handleTabChange = (tabId: string) => {
@@ -38,9 +44,33 @@ export function MobileNavigation({ activeTab, onTabChange }: MobileNavigationPro
     setIsMenuOpen(false)
 
     // Haptic feedback for mobile
-    if (navigator.vibrate) {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
       navigator.vibrate(50)
     }
+  }
+
+  // Return desktop layout during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className="tabs-themed rounded-lg mb-6">
+        <div className="grid grid-cols-7 p-1 gap-1">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => handleTabChange(id)}
+              className={`tab-trigger px-3 py-2 rounded text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                activeTab === id
+                  ? "bg-themed-primary text-white shadow-lg"
+                  : "text-themed-text opacity-70 hover:opacity-100"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="hidden lg:inline">{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (!isMobile) {
