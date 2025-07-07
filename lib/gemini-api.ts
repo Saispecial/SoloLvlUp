@@ -3,12 +3,13 @@ import type { GeminiResponse, PlayerProfile, PersonalReflection } from "./types"
 export async function generateQuests(
   playerProfile: PlayerProfile,
   reflection?: PersonalReflection,
+  diaryEntries?: any[],
 ): Promise<GeminiResponse> {
   try {
     const res = await fetch("/api/quests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player: playerProfile, reflection }),
+      body: JSON.stringify({ player: playerProfile, reflection, diaryEntries }),
     })
 
     if (!res.ok) {

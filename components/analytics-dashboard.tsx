@@ -19,7 +19,9 @@ import {
   LineChart,
   PieChart,
   BarChart,
-  Activity as ActivityIcon
+  Activity as ActivityIcon,
+  BookOpen,
+  Sparkles
 } from "lucide-react"
 import { usePlayerStore } from "@/stores/player-store"
 import { ResponsiveCard } from "./responsive-card"
@@ -67,6 +69,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
     player,
     quests,
     completedQuests,
+    getDiaryEntries,
   } = usePlayerStore()
 
   const [activeTab, setActiveTab] = useState("overview")
@@ -77,6 +80,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
   const realmPerformance = getRealmPerformance()
   const weeklyStats = getWeeklyStats()
   const monthlyProgress = getMonthlyProgress()
+  const diaryEntries = getDiaryEntries()
 
   const tabs = [
     { id: "overview", label: "Overview", icon: <BarChart3 className="w-4 h-4" /> },
@@ -315,6 +319,61 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
             <div className="text-center py-8">
               <Heart className="w-12 h-12 text-gray-400 mx-auto mb-2 opacity-50" />
               <p className="text-gray-400">No mood data available. Start reflecting to see trends!</p>
+            </div>
+          )}
+        </div>
+
+        {/* Diary Entries Summary */}
+        <div className="space-y-4 mt-8">
+          <h4 className="text-md font-medium text-gray-300 flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            Diary Entries
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-2 mb-1">
+                <BookOpen className="w-4 h-4 text-purple-400" />
+                <span className="text-sm font-medium text-purple-400">Total Entries</span>
+              </div>
+              <span className="text-2xl font-bold text-white">{diaryEntries.length}</span>
+            </div>
+            
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-4 h-4 text-green-400" />
+                <span className="text-sm font-medium text-green-400">Converted</span>
+              </div>
+              <span className="text-2xl font-bold text-white">
+                {diaryEntries.filter(entry => entry.convertedToReflection).length}
+              </span>
+            </div>
+          </div>
+          
+          {diaryEntries.length > 0 && (
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium text-gray-300">Recent Entries</h5>
+              {diaryEntries.slice(0, 3).map((entry, index) => (
+                <motion.div
+                  key={entry.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-3 rounded-lg bg-gray-800/30 border border-gray-700"
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-xs text-gray-400">
+                      {new Date(entry.timestamp).toLocaleDateString()}
+                    </span>
+                    {entry.convertedToReflection && (
+                      <span className="text-xs text-green-400">✓ Converted</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-300 line-clamp-2">
+                    {entry.content.substring(0, 100)}...
+                  </p>
+                </motion.div>
+              ))}
             </div>
           )}
         </div>

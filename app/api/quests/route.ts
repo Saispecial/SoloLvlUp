@@ -7,7 +7,7 @@ const BACKOFF_MS = 500
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as { player: PlayerProfile; reflection?: PersonalReflection }
+    const body = (await req.json()) as { player: PlayerProfile; reflection?: PersonalReflection; diaryEntries?: any[] }
     console.log("Received request body:", JSON.stringify(body, null, 2))
 
     const apiKey = process.env.GEMINI_API_KEY
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const payload = {
       contents: [
         {
-          parts: [{ text: buildPrompt(body.player, body.reflection) }],
+          parts: [{ text: buildPrompt(body.player, body.reflection, body.diaryEntries) }],
         },
       ],
     }
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function buildPrompt(player: PlayerProfile, reflection?: PersonalReflection) {
+function buildPrompt(player: PlayerProfile, reflection?: PersonalReflection, diaryEntries?: any[]) {
   const reflectionContext = reflection
     ? `
 PERSONAL REFLECTION CONTEXT:
@@ -135,8 +135,21 @@ Current Mood: ${reflection.mood}
 Emotional State: ${reflection.emotionalState}
 Current Challenges: ${reflection.currentChallenges}
 Motivation Level: ${reflection.motivationLevel}
+${reflection.diaryContent ? `Diary Content: ${reflection.diaryContent}` : ""}
 
 Based on this reflection, generate quests that specifically address their emotional needs and current life situation.
+`
+    : ""
+
+  const diaryContext = diaryEntries && diaryEntries.length > 0
+    ? `
+DIARY ENTRIES CONTEXT (Recent emotional patterns):
+${diaryEntries.slice(0, 3).map((entry, index) => `
+Entry ${index + 1} (${new Date(entry.timestamp).toLocaleDateString()}):
+"${entry.content.substring(0, 200)}${entry.content.length > 200 ? '...' : ''}"
+`).join('\n')}
+
+Consider these diary entries to understand their emotional journey and provide more personalized quests.
 `
     : ""
 
@@ -149,6 +162,7 @@ Total XP: ${player.totalXp}
 Stats: ${JSON.stringify(player.stats, null, 2)}
 
 ${reflectionContext}
+${diaryContext}
 
 Generate quests across these 5 realms that respond to their inner world and external challenges:
 1. Mind & Skill (boosts IQ, Technical Attribute, Problem Solving) - Coding, studying, learning

@@ -88,6 +88,16 @@ export interface PersonalReflection {
   currentChallenges: string
   motivationLevel: string
   timestamp: Date
+  diaryContent?: string
+  source: "manual" | "diary"
+}
+
+export interface DiaryEntry {
+  id: string
+  content: string
+  timestamp: Date
+  convertedToReflection?: boolean
+  reflectionId?: string
 }
 
 // Advanced Analytics Types

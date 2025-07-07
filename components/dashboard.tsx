@@ -15,6 +15,7 @@ import { ResponsiveCard } from "./responsive-card"
 import { ParticleBackground } from "./particle-background"
 import { FloatingElements } from "./floating-elements"
 import { AnalyticsDashboard } from "./analytics-dashboard"
+import { DiaryEntryComponent } from "./diary-entry"
 import { motion } from "framer-motion"
 
 import { Plus, Sparkles } from "lucide-react"
@@ -42,6 +43,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
     updatePlayerName,
     updateTheme,
     getReflections,
+    getDiaryEntries,
   } = usePlayerStore()
 
   const [activeTab, setActiveTab] = useState("dashboard")
@@ -77,7 +79,8 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
   const generateNewQuests = async () => {
     setIsGenerating(true)
     try {
-      const response = await generateQuests(player, currentReflection || undefined)
+      const diaryEntries = getDiaryEntries()
+      const response = await generateQuests(player, currentReflection || undefined, diaryEntries)
       addQuests(response.quests)
       setMotivation(response.suggestions.motivation)
       setEmotionalGuidance(response.suggestions.emotionalGuidance)
@@ -359,6 +362,17 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
             className={`${isMobile ? "pb-24 px-4" : ""}`}
           >
             <AnalyticsDashboard isMobile={isMobile} />
+          </motion.div>
+        )
+
+      case "diary":
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`${isMobile ? "pb-24 px-4" : ""}`}
+          >
+            <DiaryEntryComponent isMobile={isMobile} />
           </motion.div>
         )
 

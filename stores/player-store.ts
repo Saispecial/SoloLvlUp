@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import type { PlayerProfile, Quest, PersonalReflection, Achievement, Theme, DetailedTracking, MoodTrend, PerformanceMetrics } from "@/lib/types"
+import type { PlayerProfile, Quest, PersonalReflection, Achievement, Theme, DetailedTracking, MoodTrend, PerformanceMetrics, DiaryEntry } from "@/lib/types"
 import { createInitialPlayer, checkLevelUp, calculateStatGrowth, calculateNextLevelXp } from "@/lib/rpg-engine"
 import { ACHIEVEMENTS, checkAchievements } from "@/lib/achievements"
 
@@ -10,6 +10,7 @@ interface PlayerStore {
   completedQuests: Quest[]
   currentReflection: PersonalReflection | null
   reflections: PersonalReflection[]
+  diaryEntries: DiaryEntry[]
   achievements: Achievement[]
   detailedTracking: DetailedTracking
 
@@ -21,11 +22,15 @@ interface PlayerStore {
   resetPlayer: () => void
   updatePlayer: (updates: Partial<PlayerProfile>) => void
   setReflection: (reflection: Omit<PersonalReflection, "timestamp">) => void
+  addDiaryEntry: (content: string) => Promise<void>
+  convertDiaryToReflection: (diaryId: string) => Promise<void>
+  deleteDiaryEntry: (diaryId: string) => void
   addCustomAttribute: (name: string) => void
   updateStreak: () => void
   updatePlayerName: (name: string) => void
   updateTheme: (theme: Theme) => void
   getReflections: () => PersonalReflection[]
+  getDiaryEntries: () => DiaryEntry[]
   
   // Advanced Analytics Actions
   updateDetailedTracking: () => void
@@ -82,6 +87,7 @@ export const usePlayerStore = create<PlayerStore>()(
       completedQuests: [],
       currentReflection: null,
       reflections: [],
+      diaryEntries: [],
       achievements: ACHIEVEMENTS,
       detailedTracking: createInitialDetailedTracking(),
 
@@ -190,6 +196,7 @@ export const usePlayerStore = create<PlayerStore>()(
           completedQuests: [],
           currentReflection: null,
           reflections: [],
+          diaryEntries: [],
           achievements: ACHIEVEMENTS,
           detailedTracking: createInitialDetailedTracking(),
         })
@@ -266,6 +273,59 @@ export const usePlayerStore = create<PlayerStore>()(
 
       getReflections: () => {
         return get().reflections
+      },
+
+      addDiaryEntry: async (content: string) => {
+        const newEntry: DiaryEntry = {
+          id: Math.random().toString(36).substr(2, 9),
+          content,
+          timestamp: new Date(),
+          convertedToReflection: false,
+        }
+        set((state) => ({
+          diaryEntries: [newEntry, ...state.diaryEntries],
+        }))
+      },
+
+      convertDiaryToReflection: async (diaryId: string) => {
+        const { diaryEntries, reflections } = get()
+        const diaryEntry = diaryEntries.find((entry) => entry.id === diaryId)
+        
+        if (!diaryEntry || diaryEntry.convertedToReflection) return
+
+        try {
+          const { convertDiaryToReflection } = await import("@/lib/ai-stats")
+          const reflection = await convertDiaryToReflection(diaryEntry)
+          
+          const newReflection: PersonalReflection = {
+            ...reflection,
+            timestamp: new Date(),
+          }
+
+          set((state) => ({
+            reflections: [newReflection, ...state.reflections],
+            diaryEntries: state.diaryEntries.map((entry) =>
+              entry.id === diaryId
+                ? { ...entry, convertedToReflection: true, reflectionId: newReflection.timestamp.toString() }
+                : entry
+            ),
+          }))
+
+          // Update detailed tracking after conversion
+          get().updateDetailedTracking()
+        } catch (error) {
+          console.error("Error converting diary to reflection:", error)
+        }
+      },
+
+      deleteDiaryEntry: (diaryId: string) => {
+        set((state) => ({
+          diaryEntries: state.diaryEntries.filter((entry) => entry.id !== diaryId),
+        }))
+      },
+
+      getDiaryEntries: () => {
+        return get().diaryEntries
       },
 
       // Advanced Analytics Methods

@@ -29,6 +29,8 @@ const SUGGESTED_PROMPTS = [
   "Any tips to improve my streak?",
   "What do my mood trends say?",
   "How can I earn more XP?",
+  "Analyze my diary entries",
+  "Give me emotional guidance",
 ]
 
 export function TalkingAgent() {
@@ -40,6 +42,8 @@ export function TalkingAgent() {
     getMonthlyProgress,
     completedQuests,
     quests,
+    getDiaryEntries,
+    getReflections,
   } = usePlayerStore()
 
   const [messages, setMessages] = useState<Message[]>([{
@@ -285,6 +289,35 @@ export function TalkingAgent() {
       } else {
         return `Your average mood this week is ${mood.toFixed(1)}/10. The path is difficult, but every Hunter faces trials. Reflect, recover, and rise again.`
       }
+    }
+    
+    // Diary entries
+    if (lower.includes("diary") || lower.includes("journal")) {
+      const diaryEntries = getDiaryEntries()
+      const convertedEntries = diaryEntries.filter(entry => entry.convertedToReflection).length
+      
+      if (diaryEntries.length === 0) {
+        return "You haven't written any diary entries yet, Hunter. Your thoughts and feelings are valuable data for the System. Begin your emotional journey!"
+      }
+      
+      return `You have ${diaryEntries.length} diary entries, with ${convertedEntries} converted to emotional reflections. Your diary is a powerful tool for tracking your inner growth, Hunter.`
+    }
+    
+    // Emotional guidance
+    if (lower.includes("emotional guidance") || lower.includes("emotional support") || lower.includes("analyze")) {
+      const reflections = getReflections()
+      const diaryEntries = getDiaryEntries()
+      
+      if (reflections.length === 0 && diaryEntries.length === 0) {
+        return "I'd love to provide emotional guidance, Hunter! Start by writing in your diary or adding reflections. The System will analyze your emotional patterns and provide personalized support."
+      }
+      
+      if (reflections.length > 0) {
+        const recentReflection = reflections[0]
+        return `Based on your recent reflection, you're feeling ${recentReflection.mood} with ${recentReflection.emotionalState}. Your motivation is at ${recentReflection.motivationLevel}/10. Remember, every emotion is valid and temporary. Focus on self-care and small steps forward, Hunter.`
+      }
+      
+      return "I can see you have diary entries! Try converting them to reflections so I can provide more specific emotional guidance based on your patterns."
     }
     // Name
     if (lower.includes("name") || lower.includes("who am i") || lower.includes("hunter name") || lower.includes("player name") || lower.includes("profile")) {
