@@ -1,102 +1,128 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
 const MAX_RETRIES = 3
-const BACKOFF_MS = 500
+const BACKOFF_MS = 1000
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as { text: string }
-    console.log("Received emotional analysis request")
+    const { text } = (await req.json()) as { text: string }
 
+    if (typeof text !== "string" || text.trim() === "") {
+      return NextResponse.json({ error: "Invalid text" }, { status: 400 })
+    }
+
+    // Use Gemini API for proper analysis
     const apiKey = process.env.GEMINI_API_KEY
+    if (apiKey) {
+      let attempt = 0
 
-    if (!apiKey) {
-      return NextResponse.json({ error: "Missing GEMINI_API_KEY" }, { status: 500 })
-    }
-
-    const payload = {
-      contents: [
-        {
-          parts: [{ text: buildEmotionalAnalysisPrompt(body.text) }],
-        },
-      ],
-    }
-
-    let attempt = 0
-    while (attempt < MAX_RETRIES) {
-      const googleRes = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-
-      if (googleRes.ok) {
-        const data = (await googleRes.json()) as any
-        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}"
-        const jsonMatch = raw.match(/\{[\s\S]*\}/)
-        const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : getFallbackAnalysis()
-        return NextResponse.json(parsed)
-      }
-
-      if (googleRes.status !== 503) {
-        return NextResponse.json({ error: "Gemini API error" }, { status: googleRes.status })
-      }
-
-      await new Promise((r) => setTimeout(r, BACKOFF_MS * (attempt + 1)))
-      attempt++
-    }
-
-    return NextResponse.json(getFallbackAnalysis(), { status: 200 })
-  } catch (error) {
-    console.error("Error in emotional analysis API:", error)
-    return NextResponse.json(getFallbackAnalysis(), { status: 200 })
-  }
-}
-
-function buildEmotionalAnalysisPrompt(text: string) {
-  return `
-You are an AI emotional intelligence specialist for SoloLvlUp. Analyze the emotional tone and sentiment of the following text:
-
-TEXT TO ANALYZE:
-${text}
-
-Provide a comprehensive emotional analysis including:
-
-1. EMOTIONAL TONE: A brief description of the overall emotional tone (e.g., "confident and optimistic", "anxious and uncertain", "peaceful and content")
-
-2. SENTIMENT: Overall sentiment classification ("positive", "negative", or "neutral")
-
-3. KEY EMOTIONS: Array of specific emotions detected (e.g., ["excitement", "anxiety", "hope", "frustration"])
-
-4. STRESS LEVEL: A number from 1-10 indicating perceived stress level (1 = very relaxed, 10 = extremely stressed)
-
-Consider:
-- Emotional vocabulary used
-- Sentence structure and tone
-- Stress indicators
-- Positive vs negative language patterns
-- Energy levels expressed
-- Confidence indicators
-- Anxiety or worry signals
-
-Return ONLY a valid JSON response in this exact format:
+      while (attempt < MAX_RETRIES) {
+        try {
+          const prompt = `Analyze this text for emotional tone and provide a JSON response:
 {
-  "emotionalTone": "description of emotional tone",
+  "emotionalTone": "detailed emotional tone description",
   "sentiment": "positive|negative|neutral",
   "keyEmotions": ["emotion1", "emotion2", "emotion3"],
-  "stressLevel": number
+  "stressLevel": 1-10 number
 }
 
-Be accurate and empathetic in your analysis.
-`
-}
+Text: "${text}"
 
-function getFallbackAnalysis() {
-  return {
-    emotionalTone: "neutral",
-    sentiment: "neutral",
-    keyEmotions: [],
-    stressLevel: 5,
+Guidelines:
+- Identify the primary emotional tone
+- Classify overall sentiment
+- List 2-4 key emotions present
+- Rate stress level from 1 (very calm) to 10 (extremely stressed)
+- Consider physical symptoms as stress indicators
+- Factor in relationship dynamics and health concerns
+
+Respond ONLY with valid JSON:"`
+
+          const payload = {
+            contents: [
+              {
+                parts: [{ text: prompt }],
+              },
+            ],
+          }
+
+          const googleRes = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+
+          if (!googleRes.ok) {
+            throw new Error(`Gemini API returned status ${googleRes.status}`)
+          }
+
+          const data = await googleRes.json()
+          const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}"
+
+          let cleanedText = responseText
+          if (cleanedText.startsWith("```json")) {
+            cleanedText = cleanedText.replace(/```json\n?/, "").replace(/\n?```$/, "")
+          }
+          if (cleanedText.startsWith("```")) {
+            cleanedText = cleanedText.replace(/```\n?/, "").replace(/\n?```$/, "")
+          }
+
+          const analysis = JSON.parse(cleanedText)
+
+          if (analysis.emotionalTone && analysis.sentiment && analysis.keyEmotions && analysis.stressLevel) {
+            return NextResponse.json(analysis, { status: 200 })
+          } else {
+            throw new Error("Invalid response structure from Gemini")
+          }
+        } catch (geminiError: any) {
+          console.error(`Attempt ${attempt + 1}: Gemini API error:`, geminiError.message || geminiError)
+          if (attempt < MAX_RETRIES - 1) {
+            const delay = BACKOFF_MS * (attempt + 1)
+            await new Promise((resolve) => setTimeout(resolve, delay))
+          }
+          attempt++
+        }
+      }
+    }
+
+    // Fallback heuristic analysis
+    const lowerText = text.toLowerCase()
+
+    let emotionalTone = "neutral and balanced"
+    let sentiment: "positive" | "negative" | "neutral" = "neutral"
+    let keyEmotions: string[] = ["calm"]
+    let stressLevel = 5
+
+    // Detect complex emotional states
+    if (lowerText.match(/pain.*hope|hope.*pain|struggle.*fight/)) {
+      emotionalTone = "conflicted but resilient"
+      sentiment = "neutral"
+      keyEmotions = ["hope", "pain", "determination", "exhaustion"]
+      stressLevel = 7
+    } else if (lowerText.match(/physical.*emotional|body.*heart|health.*relationship/)) {
+      emotionalTone = "overwhelmed by multiple stressors"
+      sentiment = "negative"
+      keyEmotions = ["overwhelm", "pain", "vulnerability", "fatigue"]
+      stressLevel = 8
+    } else if (lowerText.match(/cycle|repeat|again.*disappoint/)) {
+      emotionalTone = "emotionally exhausted from patterns"
+      sentiment = "negative"
+      keyEmotions = ["exhaustion", "disappointment", "frustration", "sadness"]
+      stressLevel = 7
+    }
+
+    return NextResponse.json(
+      {
+        emotionalTone,
+        sentiment,
+        keyEmotions,
+        stressLevel,
+      },
+      { status: 200 },
+    )
+  } catch (error: any) {
+    console.error("emotional-analysis API error:", error)
+    return NextResponse.json({ error: "Server error processing emotional analysis" }, { status: 500 })
   }
 }

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing GEMINI_API_KEY" }, { status: 500 })
     }
 
-    const payload = { 
+    const payload = {
       contents: [
         {
           parts: [{ text: buildDiaryConversionPrompt(body.diaryContent) }],

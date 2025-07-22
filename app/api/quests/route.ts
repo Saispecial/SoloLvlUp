@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import type { GeminiResponse, PlayerProfile, PersonalReflection } from "@/lib/types"
 
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 const MAX_RETRIES = 3
 const BACKOFF_MS = 500
 
