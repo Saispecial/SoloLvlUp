@@ -906,12 +906,54 @@ Please respond as Arise, an empathetic AI companion for a solo RPG leveling syst
     return null
   }
 
-  // Generate quest-specific responses with length variations
+  // Generate quest-specific responses with length variations and real-time data
   const generateQuestResponse = (lower: string) => {
     const activeQuests = quests.filter((q) => !q.completed)
     const completedToday = completedQuests.filter(
       (q) => new Date(q.completedAt!).toDateString() === new Date().toDateString(),
     )
+
+    // Handle "current active quests" or similar queries
+    if (lower.includes("current") || lower.includes("active") || lower.includes("what quest")) {
+      if (activeQuests.length === 0) {
+        const responses = {
+          brief: "No active quests. Create new ones?",
+          normal: "No active quests, Hunter. Time to create new challenges. Need help brainstorming?",
+          detailed:
+            "You have no active quests, Hunter! This is the perfect opportunity to create new challenges that align with your current goals and aspirations. Consider what skills you want to develop, what habits you want to build, or what personal projects you want to tackle. I can help you brainstorm specific, actionable quests that will drive your growth forward. What area of your life would you like to focus on?",
+        }
+        return {
+          text: responses[responseLength],
+          category: "quest" as const,
+          metadata: { questCount: 0, suggestion: true },
+        }
+      }
+
+      // Show actual active quests
+      const questList = activeQuests.slice(0, 5).map((q, i) => {
+        const difficultyEmoji =
+          {
+            Easy: "🟢",
+            Medium: "🟡",
+            Hard: "🔴",
+            "Life Achievement": "🏆",
+          }[q.difficulty] || "⚪"
+
+        return `${i + 1}. ${difficultyEmoji} ${q.title} (+${q.xp} XP) - ${q.realm}`
+      })
+
+      const responses = {
+        brief: `${activeQuests.length} active quests:\n${questList.slice(0, 3).join("\n")}${activeQuests.length > 3 ? `\n...and ${activeQuests.length - 3} more` : ""}`,
+        normal: `You have ${activeQuests.length} active quests, Hunter:\n\n${questList.join("\n")}\n\nWhich one calls to you today?`,
+        detailed: `Here are your ${activeQuests.length} active quests, Hunter:\n\n${questList.join("\n")}\n\n${activeQuests.length > 5 ? `...and ${activeQuests.length - 5} more quests awaiting your attention.\n\n` : ""}Each quest represents a step toward your growth. The easy quests (🟢) are perfect for building momentum, while medium (🟡) and hard (🔴) quests offer greater rewards and skill development. Life Achievement quests (🏆) are your legendary challenges.\n\nI recommend starting with an easy quest if you need momentum, or tackling a medium quest if you're feeling energized. Which realm calls to you today?`,
+      }
+
+      return {
+        text: responses[responseLength],
+        category: "quest" as const,
+        metadata: { activeQuests: activeQuests.length, questList },
+      }
+    }
 
     if (lower.includes("suggest") || lower.includes("recommend")) {
       if (activeQuests.length === 0) {
@@ -956,6 +998,19 @@ Please respond as Arise, an empathetic AI companion for a solo RPG leveling syst
           metadata: { recommendation: mediumQuests[0].title, difficulty: "Medium" },
         }
       }
+
+      // General recommendation from available quests
+      const recommendedQuest = activeQuests[0]
+      const responses = {
+        brief: `Try "${recommendedQuest.title}" (${recommendedQuest.difficulty})`,
+        normal: `I recommend "${recommendedQuest.title}" - ${recommendedQuest.difficulty} difficulty, +${recommendedQuest.xp} XP in ${recommendedQuest.realm}.`,
+        detailed: `Based on your current active quests, I recommend "${recommendedQuest.title}". This ${recommendedQuest.difficulty} difficulty quest in the ${recommendedQuest.realm} realm will reward you with ${recommendedQuest.xp} XP upon completion.\n\nDescription: ${recommendedQuest.description}\n\nThis quest aligns well with your current level and will contribute to your growth in ${recommendedQuest.realm}. Are you ready to take it on?`,
+      }
+      return {
+        text: responses[responseLength],
+        category: "quest" as const,
+        metadata: { recommendation: recommendedQuest.title, difficulty: recommendedQuest.difficulty },
+      }
     }
 
     if (lower.includes("progress") || lower.includes("how am i doing")) {
@@ -964,14 +1019,14 @@ Please respond as Arise, an empathetic AI companion for a solo RPG leveling syst
       )
 
       const responses = {
-        brief: `Week: ${weeklyQuests.length}, Today: ${completedToday.length}, Streak: ${player.streak}`,
-        normal: `This week: ${weeklyQuests.length} quests, ${completedToday.length} today. Streak: ${player.streak} days. ${activeQuests.length} quests pending.`,
+        brief: `Week: ${weeklyQuests.length}, Today: ${completedToday.length}, Active: ${activeQuests.length}, Streak: ${player.streak}`,
+        normal: `This week: ${weeklyQuests.length} quests, ${completedToday.length} today. ${activeQuests.length} active quests. Streak: ${player.streak} days.`,
         detailed: `Here's your comprehensive quest progress analysis, Hunter:
 
 📊 **Weekly Performance:** ${weeklyQuests.length} quests completed
 📅 **Today's Progress:** ${completedToday.length} quests completed  
+📋 **Active Quests:** ${activeQuests.length} awaiting completion
 🔥 **Current Streak:** ${player.streak} days
-📋 **Pending Quests:** ${activeQuests.length} awaiting completion
 
 Your consistency is ${player.streak > 7 ? "exceptional - you're in the top tier of dedicated hunters" : player.streak > 3 ? "solid and building strong momentum" : "developing, and every day you're getting stronger"}. ${weeklyQuests.length > 10 ? "Your weekly output is outstanding!" : weeklyQuests.length > 5 ? "You're maintaining good productivity." : "Focus on small, consistent wins to build momentum."}`,
       }
@@ -979,7 +1034,11 @@ Your consistency is ${player.streak > 7 ? "exceptional - you're in the top tier 
       return {
         text: responses[responseLength],
         category: "analytics" as const,
-        metadata: { weeklyQuests: weeklyQuests.length, todayQuests: completedToday.length },
+        metadata: {
+          weeklyQuests: weeklyQuests.length,
+          todayQuests: completedToday.length,
+          activeQuests: activeQuests.length,
+        },
       }
     }
 
