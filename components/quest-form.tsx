@@ -107,201 +107,205 @@ export function QuestForm({ onSubmit, onClose, editQuest, isEditing = false }: Q
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="card-themed w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="card-themed w-full max-w-2xl my-8 max-h-[calc(100vh-4rem)]">
+        <div className="flex flex-col max-h-[calc(100vh-4rem)]">
+          {/* Fixed Header */}
+          <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 flex-shrink-0">
             <h2 className="text-xl font-bold text-themed-text">{isEditing ? "Edit Quest" : "Create New Quest"}</h2>
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-themed-text">
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-themed-text hover:bg-white/10">
               <X className="w-4 h-4" />
             </Button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="title" className="text-themed-text">
-                Title
-              </Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="input-themed mt-1"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="description" className="text-themed-text">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="input-themed mt-1"
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          {/* Scrollable Content */}
+          <div className="overflow-y-auto flex-1 px-6 py-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label className="text-themed-text">Type</Label>
-                <Select value={type} onValueChange={(value: QuestType) => setType(value)}>
-                  <SelectTrigger className="input-themed mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Daily">Daily</SelectItem>
-                    <SelectItem value="Normal">Normal</SelectItem>
-                    <SelectItem value="Weekly">Weekly</SelectItem>
-                    <SelectItem value="Main">Main</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="title" className="text-themed-text">
+                  Title
+                </Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="input-themed mt-1"
+                  required
+                />
               </div>
 
               <div>
-                <Label className="text-themed-text">Difficulty</Label>
-                <Select value={difficulty} onValueChange={(value: QuestDifficulty) => setDifficulty(value)}>
-                  <SelectTrigger className="input-themed mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Easy">Easy (10 XP)</SelectItem>
-                    <SelectItem value="Medium">Medium (25 XP)</SelectItem>
-                    <SelectItem value="Hard">Hard (50 XP)</SelectItem>
-                    <SelectItem value="Life Achievement">Life Achievement (100 XP)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="description" className="text-themed-text">
+                  Description
+                </Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="input-themed mt-1"
+                  rows={3}
+                />
               </div>
-            </div>
 
-            <div>
-              <Label className="text-themed-text">Realm</Label>
-              <Select value={realm} onValueChange={(value: Realm) => setRealm(value)}>
-                <SelectTrigger className="input-themed mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Mind & Skill">Mind & Skill</SelectItem>
-                  <SelectItem value="Emotional & Spiritual">Emotional & Spiritual</SelectItem>
-                  <SelectItem value="Body & Discipline">Body & Discipline</SelectItem>
-                  <SelectItem value="Creation & Mission">Creation & Mission</SelectItem>
-                  <SelectItem value="Heart & Loyalty">Heart & Loyalty</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* AI Stat Suggestions */}
-            {!isEditing && (suggestedStats || isFetchingSuggestions) && (
-              <div className="bg-themed-accent/10 p-3 rounded-lg border border-themed-accent/30">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-themed-accent">
-                    <Sparkles className="w-4 h-4" />
-                    AI Stat Suggestions
-                  </div>
-                  {isFetchingSuggestions ? (
-                    <span className="text-xs text-themed-text opacity-60 italic">Analyzing...</span>
-                  ) : (
-                    suggestedStats && (
-                      <Button
-                        type="button"
-                        onClick={applySuggestions}
-                        size="sm"
-                        className="text-xs bg-themed-accent text-white hover:opacity-90"
-                      >
-                        <Zap className="w-3 h-3 mr-1" />
-                        Apply
-                      </Button>
-                    )
-                  )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-themed-text">Type</Label>
+                  <Select value={type} onValueChange={(value: QuestType) => setType(value)}>
+                    <SelectTrigger className="input-themed mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Daily">Daily</SelectItem>
+                      <SelectItem value="Normal">Normal</SelectItem>
+                      <SelectItem value="Weekly">Weekly</SelectItem>
+                      <SelectItem value="Main">Main</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                {suggestedStats && (
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                    {Object.entries(suggestedStats)
-                      .filter(([_, value]) => value && value > 0)
-                      .map(([stat, value]) => (
-                        <div key={stat} className="flex justify-between">
-                          <span className="text-themed-text opacity-80">{stat}:</span>
-                          <span className="font-medium text-themed-accent">+{value}</span>
-                        </div>
-                      ))}
-                    {Object.values(suggestedStats).every((v) => !v || v === 0) && !isFetchingSuggestions && (
-                      <span className="col-span-2 text-xs text-center text-themed-text opacity-60 italic">
-                        No specific stat boosts suggested.
-                      </span>
+
+                <div>
+                  <Label className="text-themed-text">Difficulty</Label>
+                  <Select value={difficulty} onValueChange={(value: QuestDifficulty) => setDifficulty(value)}>
+                    <SelectTrigger className="input-themed mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Easy">Easy (10 XP)</SelectItem>
+                      <SelectItem value="Medium">Medium (25 XP)</SelectItem>
+                      <SelectItem value="Hard">Hard (50 XP)</SelectItem>
+                      <SelectItem value="Life Achievement">Life Achievement (100 XP)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-themed-text">Realm</Label>
+                <Select value={realm} onValueChange={(value: Realm) => setRealm(value)}>
+                  <SelectTrigger className="input-themed mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mind & Skill">Mind & Skill</SelectItem>
+                    <SelectItem value="Emotional & Spiritual">Emotional & Spiritual</SelectItem>
+                    <SelectItem value="Body & Discipline">Body & Discipline</SelectItem>
+                    <SelectItem value="Creation & Mission">Creation & Mission</SelectItem>
+                    <SelectItem value="Heart & Loyalty">Heart & Loyalty</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* AI Stat Suggestions */}
+              {!isEditing && (suggestedStats || isFetchingSuggestions) && (
+                <div className="bg-themed-accent/10 p-3 rounded-lg border border-themed-accent/30">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-themed-accent">
+                      <Sparkles className="w-4 h-4" />
+                      AI Stat Suggestions
+                    </div>
+                    {isFetchingSuggestions ? (
+                      <span className="text-xs text-themed-text opacity-60 italic">Analyzing...</span>
+                    ) : (
+                      suggestedStats && (
+                        <Button
+                          type="button"
+                          onClick={applySuggestions}
+                          size="sm"
+                          className="text-xs bg-themed-accent text-white hover:opacity-90"
+                        >
+                          <Zap className="w-3 h-3 mr-1" />
+                          Apply
+                        </Button>
+                      )
                     )}
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Manual Stat Boosts */}
-            <div>
-              <Label className="text-themed-text">Stat Boosts</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {Object.entries(statBoosts).map(([stat, value]) => (
-                  <div key={stat} className="flex items-center gap-2">
-                    <Label className="text-sm text-themed-text min-w-0 flex-1">{stat}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={value || 0}
-                      onChange={(e) =>
-                        setStatBoosts((prev) => ({
-                          ...prev,
-                          [stat]: Number.parseInt(e.target.value) || 0,
-                        }))
-                      }
-                      className="w-16 input-themed"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="dueDate" className="text-themed-text flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Due Date & Time
-              </Label>
-              <Input
-                id="dueDate"
-                type="datetime-local"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="input-themed mt-1"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="recurring"
-                checked={recurring}
-                onChange={(e) => setRecurring(e.target.checked)}
-                className="rounded"
-              />
-              <Label htmlFor="recurring" className="text-themed-text">
-                Recurring Quest
-              </Label>
-            </div>
-
-            <Button type="submit" className="w-full btn-primary">
-              {isEditing ? (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Quest
-                </>
+                  {suggestedStats && (
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                      {Object.entries(suggestedStats)
+                        .filter(([_, value]) => value && value > 0)
+                        .map(([stat, value]) => (
+                          <div key={stat} className="flex justify-between">
+                            <span className="text-themed-text opacity-80">{stat}:</span>
+                            <span className="font-medium text-themed-accent">+{value}</span>
+                          </div>
+                        ))}
+                      {Object.values(suggestedStats).every((v) => !v || v === 0) && !isFetchingSuggestions && (
+                        <span className="col-span-2 text-xs text-center text-themed-text opacity-60 italic">
+                          No specific stat boosts suggested.
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
-            </Button>
-          </form>
+
+              {/* Manual Stat Boosts */}
+              <div>
+                <Label className="text-themed-text">Stat Boosts</Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {Object.entries(statBoosts).map(([stat, value]) => (
+                    <div key={stat} className="flex items-center gap-2">
+                      <Label className="text-sm text-themed-text min-w-0 flex-1">{stat}</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={value || 0}
+                        onChange={(e) =>
+                          setStatBoosts((prev) => ({
+                            ...prev,
+                            [stat]: Number.parseInt(e.target.value) || 0,
+                          }))
+                        }
+                        className="w-16 input-themed"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="dueDate" className="text-themed-text flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Due Date & Time
+                </Label>
+                <Input
+                  id="dueDate"
+                  type="datetime-local"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="input-themed mt-1"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="recurring"
+                  checked={recurring}
+                  onChange={(e) => setRecurring(e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor="recurring" className="text-themed-text">
+                  Recurring Quest
+                </Label>
+              </div>
+
+              <Button type="submit" className="w-full btn-primary">
+                {isEditing ? (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Quest
+                  </>
+                )}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
