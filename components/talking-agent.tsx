@@ -423,18 +423,26 @@ export function TalkingAgent() {
     }
 
     recognition.onerror = (event: any) => {
-      console.error("Wake recognition error:", event.error)
+      const errorCode = event.error
 
-      // Handle specific error types
-      if (event.error === "aborted") {
-        // This is often triggered by browser security policies or user actions
-        console.log("Wake recognition was aborted, will retry with delay")
-      } else if (event.error === "not-allowed") {
+      if (errorCode === "aborted") {
+        // Silently handle aborted errors - they're normal and don't need aggressive retry
+        console.log("[v0] Wake recognition was aborted (normal operation)")
+        wakeErrorCountRef.current = 0 // Reset error count for normal aborts
+      } else if (errorCode === "not-allowed") {
         // User denied permission
         setWakeWordEnabled(false)
         console.log("Wake word detection disabled due to permission denial")
-      } else if (event.error === "network") {
-        // Network error
+      } else if (errorCode === "network") {
+        // Network error - increment retry counter
+        wakeErrorCountRef.current += 1
+        console.warn("Wake recognition network error, retry count:", wakeErrorCountRef.current)
+      } else if (errorCode === "no-speech") {
+        // No speech detected - this is normal, don't increment error count
+        console.log("[v0] No speech detected in wake word listening")
+      } else {
+        // Other errors
+        console.warn("Wake recognition error:", errorCode)
         wakeErrorCountRef.current += 1
       }
 
@@ -446,37 +454,46 @@ export function TalkingAgent() {
       setWakeRecognitionState("idle")
       setIsWakeListening(false)
 
-      // Only restart if wake word is enabled and we're not showing the chat
-      if (wakeWordEnabled && !show) {
+      if (wakeWordEnabled && !show && wakeErrorCountRef.current < 3) {
         // Implement exponential backoff for retries
-        const retryDelay = Math.min(1000 * Math.pow(1.5, wakeErrorCountRef.current), 10000)
+        const retryDelay = Math.min(500 * Math.pow(1.5, wakeErrorCountRef.current), 5000)
 
         if (wakeRetryTimeoutRef.current) {
           clearTimeout(wakeRetryTimeoutRef.current)
         }
 
         wakeRetryTimeoutRef.current = setTimeout(() => {
-          if (!show && wakeRecognitionState === "idle" && wakeWordEnabled) {
-            startWakeRecognition()
+          if (!show && wakeWordEnabled && wakeRecognitionRef.current) {
+            try {
+              wakeRecognitionRef.current.start()
+            } catch (e) {
+              console.log("[v0] Could not restart wake recognition:", (e as Error).message)
+            }
           }
         }, retryDelay)
+      } else if (wakeErrorCountRef.current >= 3) {
+        // Too many errors - disable temporarily
+        console.log("[v0] Too many wake recognition errors, pausing for 20 seconds")
+        setWakeWordEnabled(false)
+        setTimeout(() => {
+          setWakeWordEnabled(true)
+          wakeErrorCountRef.current = 0
+        }, 20000)
       }
     }
 
     wakeRecognitionRef.current = recognition
-  }, [supportsSpeech, show, wakeRecognitionState, wakeWordEnabled])
+  }, [supportsSpeech, wakeWordEnabled]) // Removed show and wakeRecognitionState to prevent unnecessary re-initialization
 
   // Enhanced wake word detection with proper state management and error handling
   useEffect(() => {
-    // Don't run wake word detection if speech isn't supported or chat is open
-    if (!supportsSpeech || show) {
+    if (!supportsSpeech || !wakeWordEnabled || show) {
       // Stop wake recognition if it's running
-      if (wakeRecognitionRef.current && wakeRecognitionState === "listening") {
+      if (wakeRecognitionRef.current) {
         try {
           wakeRecognitionRef.current.stop()
-          setWakeRecognitionState("stopping")
         } catch (e) {
-          console.error("Error stopping wake recognition:", e)
+          console.log("[v0] Could not stop wake recognition")
         }
       }
 
@@ -493,11 +510,16 @@ export function TalkingAgent() {
     // Initialize wake recognition if needed
     if (!wakeRecognitionRef.current) {
       initializeWakeRecognition()
-    }
-
-    // Start wake recognition if conditions are met
-    if (wakeRecognitionState === "idle" && !isWakeListening && wakeRecognitionRef.current && wakeWordEnabled) {
-      startWakeRecognition()
+      // Start it after initialization
+      setTimeout(() => {
+        if (wakeRecognitionRef.current && wakeRecognitionState === "idle") {
+          try {
+            wakeRecognitionRef.current.start()
+          } catch (e) {
+            console.log("[v0] Could not start wake recognition:", (e as Error).message)
+          }
+        }
+      }, 100)
     }
 
     // Cleanup function
@@ -507,7 +529,7 @@ export function TalkingAgent() {
         wakeRetryTimeoutRef.current = null
       }
     }
-  }, [supportsSpeech, show, wakeRecognitionState, wakeWordEnabled, initializeWakeRecognition])
+  }, [supportsSpeech, show, wakeWordEnabled, initializeWakeRecognition]) // Removed wakeRecognitionState
 
   // Helper function to start wake recognition safely
   const startWakeRecognition = () => {
