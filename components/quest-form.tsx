@@ -1,16 +1,15 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
-import { X } from "lucide-react"
-import type { Quest } from "@/lib/types"
+import { useState, useEffect, useRef } from "react"
+import { X, Save, Plus, Calendar, Sparkles, Zap } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { motion, AnimatePresence } from "framer-motion"
+import type { Quest, QuestType, QuestDifficulty, Realm, PlayerStats } from "@/lib/types"
+import { getSuggestedStatsFromAI } from "@/lib/ai-stats"
 
 interface QuestFormProps {
   onSubmit: (quest: Omit<Quest, "id" | "completed" | "createdAt">) => void
@@ -20,289 +19,291 @@ interface QuestFormProps {
 }
 
 export function QuestForm({ onSubmit, onClose, editQuest, isEditing = false }: QuestFormProps) {
-  const [formData, setFormData] = useState({
-    title: editQuest?.title || "",
-    description: editQuest?.description || "",
-    xp: editQuest?.xp || 100,
-    type: editQuest?.type || "daily",
-    difficulty: editQuest?.difficulty || "medium",
-    realm: editQuest?.realm || "Physical",
-    statBoosts: editQuest?.statBoosts || {},
-    dueDate: editQuest?.dueDate || "",
-    recurring: editQuest?.recurring || false,
-  })
+  const [title, setTitle] = useState(editQuest?.title || "")
+  const [description, setDescription] = useState(editQuest?.description || "")
+  const [type, setType] = useState<QuestType>(editQuest?.type || "Daily")
+  const [difficulty, setDifficulty] = useState<QuestDifficulty>(editQuest?.difficulty || "Easy")
+  const [realm, setRealm] = useState<Realm>(editQuest?.realm || "Mind & Skill")
+  const [recurring, setRecurring] = useState(editQuest?.recurring || false)
+  const [dueDate, setDueDate] = useState(
+    editQuest?.dueDate ? new Date(editQuest.dueDate).toISOString().slice(0, 16) : "",
+  )
+  const [statBoosts, setStatBoosts] = useState<Partial<PlayerStats>>(
+    editQuest?.statBoosts || {
+      IQ: 0,
+      EQ: 0,
+      Strength: 0,
+      "Technical Attribute": 0,
+      Aptitude: 0,
+      "Problem Solving": 0,
+    },
+  )
+  const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false)
+  const [suggestedStats, setSuggestedStats] = useState<Partial<PlayerStats> | null>(null)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
-  const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const xpValues = {
+    Easy: 10,
+    Medium: 25,
+    Hard: 50,
+    "Life Achievement": 100,
+  }
 
+  // AI stat suggestions with debouncing
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose()
-      }
+    if (isEditing) return
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
     }
 
-    const handleSubmit = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        handleFormSubmit(e as any)
+    debounceTimeoutRef.current = setTimeout(async () => {
+      if (title.trim() || description.trim()) {
+        setIsFetchingSuggestions(true)
+        try {
+          const suggestions = await getSuggestedStatsFromAI(title, description)
+          setSuggestedStats(suggestions)
+        } catch (error) {
+          console.error("Failed to fetch AI suggestions:", error)
+          setSuggestedStats(null)
+        } finally {
+          setIsFetchingSuggestions(false)
+        }
+      } else {
+        setSuggestedStats(null)
       }
-    }
-
-    document.addEventListener("keydown", handleEscape)
-    document.addEventListener("keydown", handleSubmit)
+    }, 1000)
 
     return () => {
-      document.removeEventListener("keydown", handleEscape)
-      document.removeEventListener("keydown", handleSubmit)
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
     }
-  }, [formData])
+  }, [title, description, isEditing])
 
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {}
-
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required"
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required"
-    }
-
-    if (formData.xp < 1) {
-      newErrors.xp = "XP must be at least 1"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
-      return
-    }
-
     onSubmit({
-      ...formData,
-      xp: Number(formData.xp),
+      title,
+      description,
+      type,
+      difficulty,
+      realm,
+      xp: xpValues[difficulty],
+      recurring,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      statBoosts,
     })
+
+    onClose()
   }
 
-  const handleChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
+  const applySuggestions = () => {
+    if (suggestedStats) {
+      setStatBoosts(suggestedStats)
+      setSuggestedStats(null)
     }
   }
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-themed-card border border-themed-border rounded-2xl shadow-2xl w-full max-w-2xl max-h-[calc(100vh-2rem)] flex flex-col"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Fixed Header */}
-          <div className="flex items-center justify-between p-6 border-b border-themed-border flex-shrink-0">
-            <h2 className="text-2xl font-bold text-themed-text">{isEditing ? "Edit Quest" : "Create New Quest"}</h2>
-            <button
-              onClick={onClose}
-              className="text-themed-text hover:text-themed-accent transition-colors p-2 hover:bg-themed-accent/10 rounded-lg"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="card-themed w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-themed-text">{isEditing ? "Edit Quest" : "Create New Quest"}</h2>
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-themed-text">
+              <X className="w-4 h-4" />
+            </Button>
           </div>
 
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar">
-            <form onSubmit={handleFormSubmit} className="space-y-6">
-              {/* Title */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="title" className="text-themed-text">
+                Title
+              </Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="input-themed mt-1"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="description" className="text-themed-text">
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="input-themed mt-1"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="title" className="text-themed-text font-medium">
-                  Quest Title *
-                </Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => handleChange("title", e.target.value)}
-                  placeholder="Enter quest title"
-                  className={`mt-2 input-themed ${errors.title ? "border-red-500" : ""}`}
-                  autoFocus
-                />
-                {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-              </div>
-
-              {/* Description */}
-              <div>
-                <Label htmlFor="description" className="text-themed-text font-medium">
-                  Description *
-                </Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleChange("description", e.target.value)}
-                  placeholder="Describe your quest"
-                  className={`mt-2 input-themed min-h-[100px] ${errors.description ? "border-red-500" : ""}`}
-                />
-                {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-              </div>
-
-              {/* XP Reward */}
-              <div>
-                <Label htmlFor="xp" className="text-themed-text font-medium">
-                  XP Reward *
-                </Label>
-                <Input
-                  id="xp"
-                  type="number"
-                  value={formData.xp}
-                  onChange={(e) => handleChange("xp", Number.parseInt(e.target.value) || 0)}
-                  placeholder="100"
-                  min="1"
-                  className={`mt-2 input-themed ${errors.xp ? "border-red-500" : ""}`}
-                />
-                {errors.xp && <p className="text-red-500 text-sm mt-1">{errors.xp}</p>}
-              </div>
-
-              {/* Type and Difficulty Row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="type" className="text-themed-text font-medium">
-                    Quest Type
-                  </Label>
-                  <Select value={formData.type} onValueChange={(value) => handleChange("type", value)}>
-                    <SelectTrigger className="mt-2 input-themed">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="main">Main Quest</SelectItem>
-                      <SelectItem value="side">Side Quest</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="difficulty" className="text-themed-text font-medium">
-                    Difficulty
-                  </Label>
-                  <Select value={formData.difficulty} onValueChange={(value) => handleChange("difficulty", value)}>
-                    <SelectTrigger className="mt-2 input-themed">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                      <SelectItem value="extreme">Extreme</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Realm */}
-              <div>
-                <Label htmlFor="realm" className="text-themed-text font-medium">
-                  Realm
-                </Label>
-                <Select value={formData.realm} onValueChange={(value) => handleChange("realm", value)}>
-                  <SelectTrigger className="mt-2 input-themed">
+                <Label className="text-themed-text">Type</Label>
+                <Select value={type} onValueChange={(value: QuestType) => setType(value)}>
+                  <SelectTrigger className="input-themed mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Physical">Physical</SelectItem>
-                    <SelectItem value="Mental">Mental</SelectItem>
-                    <SelectItem value="Social">Social</SelectItem>
-                    <SelectItem value="Spiritual">Spiritual</SelectItem>
+                    <SelectItem value="Daily">Daily</SelectItem>
+                    <SelectItem value="Normal">Normal</SelectItem>
+                    <SelectItem value="Weekly">Weekly</SelectItem>
+                    <SelectItem value="Main">Main</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Stat Boosts */}
               <div>
-                <Label className="text-themed-text font-medium mb-2 block">Stat Boosts (Optional)</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {["IQ", "EQ", "Strength", "Charisma", "Wisdom", "Luck"].map((stat) => (
-                    <div key={stat} className="flex items-center gap-2">
-                      <Label htmlFor={stat} className="text-themed-text text-sm min-w-[80px]">
-                        {stat}
-                      </Label>
-                      <Input
-                        id={stat}
-                        type="number"
-                        value={formData.statBoosts[stat] || 0}
-                        onChange={(e) =>
-                          handleChange("statBoosts", {
-                            ...formData.statBoosts,
-                            [stat]: Number.parseInt(e.target.value) || 0,
-                          })
-                        }
-                        placeholder="0"
-                        min="0"
-                        className="input-themed"
-                      />
-                    </div>
-                  ))}
+                <Label className="text-themed-text">Difficulty</Label>
+                <Select value={difficulty} onValueChange={(value: QuestDifficulty) => setDifficulty(value)}>
+                  <SelectTrigger className="input-themed mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Easy">Easy (10 XP)</SelectItem>
+                    <SelectItem value="Medium">Medium (25 XP)</SelectItem>
+                    <SelectItem value="Hard">Hard (50 XP)</SelectItem>
+                    <SelectItem value="Life Achievement">Life Achievement (100 XP)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-themed-text">Realm</Label>
+              <Select value={realm} onValueChange={(value: Realm) => setRealm(value)}>
+                <SelectTrigger className="input-themed mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Mind & Skill">Mind & Skill</SelectItem>
+                  <SelectItem value="Emotional & Spiritual">Emotional & Spiritual</SelectItem>
+                  <SelectItem value="Body & Discipline">Body & Discipline</SelectItem>
+                  <SelectItem value="Creation & Mission">Creation & Mission</SelectItem>
+                  <SelectItem value="Heart & Loyalty">Heart & Loyalty</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* AI Stat Suggestions */}
+            {!isEditing && (suggestedStats || isFetchingSuggestions) && (
+              <div className="bg-themed-accent/10 p-3 rounded-lg border border-themed-accent/30">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-themed-accent">
+                    <Sparkles className="w-4 h-4" />
+                    AI Stat Suggestions
+                  </div>
+                  {isFetchingSuggestions ? (
+                    <span className="text-xs text-themed-text opacity-60 italic">Analyzing...</span>
+                  ) : (
+                    suggestedStats && (
+                      <Button
+                        type="button"
+                        onClick={applySuggestions}
+                        size="sm"
+                        className="text-xs bg-themed-accent text-white hover:opacity-90"
+                      >
+                        <Zap className="w-3 h-3 mr-1" />
+                        Apply
+                      </Button>
+                    )
+                  )}
                 </div>
+                {suggestedStats && (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    {Object.entries(suggestedStats)
+                      .filter(([_, value]) => value && value > 0)
+                      .map(([stat, value]) => (
+                        <div key={stat} className="flex justify-between">
+                          <span className="text-themed-text opacity-80">{stat}:</span>
+                          <span className="font-medium text-themed-accent">+{value}</span>
+                        </div>
+                      ))}
+                    {Object.values(suggestedStats).every((v) => !v || v === 0) && !isFetchingSuggestions && (
+                      <span className="col-span-2 text-xs text-center text-themed-text opacity-60 italic">
+                        No specific stat boosts suggested.
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
+            )}
 
-              {/* Due Date */}
-              <div>
-                <Label htmlFor="dueDate" className="text-themed-text font-medium">
-                  Due Date (Optional)
-                </Label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => handleChange("dueDate", e.target.value)}
-                  className="mt-2 input-themed"
-                />
+            {/* Manual Stat Boosts */}
+            <div>
+              <Label className="text-themed-text">Stat Boosts</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {Object.entries(statBoosts).map(([stat, value]) => (
+                  <div key={stat} className="flex items-center gap-2">
+                    <Label className="text-sm text-themed-text min-w-0 flex-1">{stat}</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={value || 0}
+                      onChange={(e) =>
+                        setStatBoosts((prev) => ({
+                          ...prev,
+                          [stat]: Number.parseInt(e.target.value) || 0,
+                        }))
+                      }
+                      className="w-16 input-themed"
+                    />
+                  </div>
+                ))}
               </div>
+            </div>
 
-              {/* Recurring Checkbox */}
-              <div className="flex items-center gap-2">
-                <input
-                  id="recurring"
-                  type="checkbox"
-                  checked={formData.recurring}
-                  onChange={(e) => handleChange("recurring", e.target.checked)}
-                  className="w-4 h-4 text-themed-primary bg-themed-background border-themed-border rounded focus:ring-themed-primary"
-                />
-                <Label htmlFor="recurring" className="text-themed-text font-medium cursor-pointer">
-                  Make this quest recurring
-                </Label>
-              </div>
-            </form>
-          </div>
+            <div>
+              <Label htmlFor="dueDate" className="text-themed-text flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Due Date & Time
+              </Label>
+              <Input
+                id="dueDate"
+                type="datetime-local"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="input-themed mt-1"
+              />
+            </div>
 
-          {/* Fixed Footer */}
-          <div className="flex gap-3 p-6 border-t border-themed-border flex-shrink-0">
-            <Button type="button" onClick={onClose} variant="outline" className="flex-1 btn-secondary bg-transparent">
-              Cancel
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="recurring"
+                checked={recurring}
+                onChange={(e) => setRecurring(e.target.checked)}
+                className="rounded"
+              />
+              <Label htmlFor="recurring" className="text-themed-text">
+                Recurring Quest
+              </Label>
+            </div>
+
+            <Button type="submit" className="w-full btn-primary">
+              {isEditing ? (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Quest
+                </>
+              )}
             </Button>
-            <Button type="submit" onClick={handleFormSubmit} className="flex-1 btn-primary">
-              {isEditing ? "Update Quest" : "Create Quest"}
-            </Button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+          </form>
+        </div>
+      </div>
+    </div>
   )
 }

@@ -2,72 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-  }
-
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
 /* Base theme variables */
 :root {
   --color-primary: 59 130 246;
@@ -267,36 +201,6 @@
   --color-surface: 31 41 55;
   --color-text: 254 243 199;
   --color-border: 245 158 11;
-}
-
-/* Theme: Cyberpunk */
-.theme-cyberpunk {
-  --color-primary: 6, 182, 212;
-  --color-secondary: 139, 92, 246;
-  --color-accent: 236, 72, 153;
-  --color-background: 15, 23, 42;
-  --color-surface: 30, 41, 59;
-  --color-text: 248, 250, 252;
-}
-
-/* Theme: Neon */
-.theme-neon {
-  --color-primary: 34, 211, 238;
-  --color-secondary: 168, 85, 247;
-  --color-accent: 251, 146, 60;
-  --color-background: 17, 24, 39;
-  --color-surface: 31, 41, 55;
-  --color-text: 249, 250, 251;
-}
-
-/* Theme: Dark */
-.theme-dark {
-  --color-primary: 59, 130, 246;
-  --color-secondary: 147, 51, 234;
-  --color-accent: 239, 68, 68;
-  --color-background: 0, 0, 0;
-  --color-surface: 23, 23, 23;
-  --color-text: 255, 255, 255;
 }
 
 /* Base styles with futuristic enhancements */
@@ -611,55 +515,29 @@ body {
   .animate-shine {
     animation: shine 2s infinite linear;
   }
-
-  /* Custom scrollbar styles */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    transition: background-color 0.2s;
-  }
-
-  .scrollbar-thin:hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.4);
-  }
-
-  .scrollbar-thumb-white\/20 {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  }
-
-  .scrollbar-track-transparent {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  }
-
-  .text-balance {
-    text-wrap: balance;
-  }
 }
 
 /* Enhanced component styles */
 .quest-card {
-  background: linear-gradient(135deg, rgba(var(--color-surface), 0.5), rgba(var(--color-primary), 0.1));
-  border: 1px solid rgba(var(--color-primary), 0.3);
-  transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .quest-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(var(--color-primary), 0.3);
-  border-color: rgb(var(--color-primary));
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+/* Mobile quest card adjustments */
+@media (max-width: 767px) {
+  .quest-card:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
 }
 
 .stat-card {
@@ -743,48 +621,137 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(to right, rgb(var(--color-primary)), rgb(var(--color-secondary)));
+  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-accent)));
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(var(--color-primary), 0.3);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgb(var(--color-primary) / 0.5);
+}
+
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
 }
 
 .btn-secondary {
-  background-color: rgba(var(--color-surface), 0.5);
+  background: rgba(255, 255, 255, 0.05);
   color: rgb(var(--color-text));
-  border: 1px solid rgba(var(--color-text), 0.2);
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  transition: all 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  font-weight: 500;
 }
 
 .btn-secondary:hover {
-  background-color: rgba(var(--color-surface), 0.8);
-  border-color: rgb(var(--color-primary));
-}
-
-.dashboard-card {
-  transition: all 0.3s ease;
-}
-
-.dashboard-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgb(var(--color-accent));
   transform: translateY(-2px);
 }
 
-.main-container {
-  background: linear-gradient(
-    135deg,
-    rgba(var(--color-background), 1) 0%,
-    rgba(var(--color-primary), 0.05) 50%,
-    rgba(var(--color-background), 1) 100%
-  );
+.input-themed {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgb(var(--color-text));
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.input-themed:focus {
+  outline: none;
+  border-color: rgb(var(--color-primary));
+  box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.2), 0 0 20px rgb(var(--color-primary) / 0.3);
+}
+
+.card-themed {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tabs-themed {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-trigger {
+  color: rgb(var(--color-text) / 0.7);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tab-trigger[data-state="active"] {
+  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-accent)));
+  color: white;
+  box-shadow: 0 0 20px rgb(var(--color-primary) / 0.5);
+}
+
+.theme-selector {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-selector:hover {
+  border-color: rgb(var(--color-accent));
+  transform: translateY(-2px);
+}
+
+.theme-selector.selected {
+  border-color: rgb(var(--color-primary));
+  background: rgb(var(--color-primary) / 0.1);
+  box-shadow: 0 0 20px rgb(var(--color-primary) / 0.3);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-accent)));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, rgb(var(--color-accent)), rgb(var(--color-primary)));
+}
+
+/* Selection styling */
+::selection {
+  background: rgb(var(--color-primary) / 0.3);
+  color: rgb(var(--color-text));
 }
 
 /* Mobile-specific improvements */
