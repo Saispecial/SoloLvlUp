@@ -1,6 +1,16 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import type { PlayerProfile, Quest, PersonalReflection, Achievement, Theme, DetailedTracking, MoodTrend, PerformanceMetrics, DiaryEntry } from "@/lib/types"
+import type {
+  PlayerProfile,
+  Quest,
+  PersonalReflection,
+  Achievement,
+  Theme,
+  DetailedTracking,
+  MoodTrend,
+  PerformanceMetrics,
+  DiaryEntry,
+} from "@/lib/types"
 import { createInitialPlayer, checkLevelUp, calculateStatGrowth, calculateNextLevelXp } from "@/lib/rpg-engine"
 import { ACHIEVEMENTS, checkAchievements } from "@/lib/achievements"
 
@@ -31,7 +41,7 @@ interface PlayerStore {
   updateTheme: (theme: Theme) => void
   getReflections: () => PersonalReflection[]
   getDiaryEntries: () => DiaryEntry[]
-  
+
   // Advanced Analytics Actions
   updateDetailedTracking: () => void
   getPerformanceMetrics: () => PerformanceMetrics
@@ -139,7 +149,13 @@ export const usePlayerStore = create<PlayerStore>()(
         const newCompletedQuests = [...completedQuests, completedQuest]
 
         // Check achievements
-        const updatedAchievements = checkAchievements(updatedPlayer, newCompletedQuests, achievements, get().reflections, get().detailedTracking)
+        const updatedAchievements = checkAchievements(
+          updatedPlayer,
+          newCompletedQuests,
+          achievements,
+          get().reflections,
+          get().detailedTracking,
+        )
 
         set({
           player: updatedPlayer,
@@ -153,7 +169,7 @@ export const usePlayerStore = create<PlayerStore>()(
       },
 
       addQuests: (newQuests) => {
-        console.log('[addQuests] Adding quests:', newQuests)
+        console.log("[addQuests] Adding quests:", newQuests)
         const questsWithIds = newQuests.map((quest) => ({
           ...quest,
           id: Math.random().toString(36).substr(2, 9),
@@ -166,7 +182,7 @@ export const usePlayerStore = create<PlayerStore>()(
         }))
         setTimeout(() => {
           const { quests } = get()
-          console.log('[addQuests] Final quests state:', quests)
+          console.log("[addQuests] Final quests state:", quests)
         }, 100)
       },
 
@@ -210,14 +226,14 @@ export const usePlayerStore = create<PlayerStore>()(
 
       setReflection: (reflection) => {
         const newReflection = {
-            ...reflection,
-            timestamp: new Date(),
+          ...reflection,
+          timestamp: new Date(),
         }
         set((state) => ({
           currentReflection: newReflection,
           reflections: [newReflection, ...(state.reflections || [])],
         }))
-        
+
         // Update detailed tracking after reflection
         get().updateDetailedTracking()
       },
@@ -239,7 +255,7 @@ export const usePlayerStore = create<PlayerStore>()(
       },
 
       updateStreak: () => {
-        const { completedQuests } = get()
+        const { completedQuests, player } = get()
         const today = new Date().toDateString()
         const yesterday = new Date(Date.now() - 86400000).toDateString()
 
@@ -251,10 +267,29 @@ export const usePlayerStore = create<PlayerStore>()(
           (q) => q.completedAt && new Date(q.completedAt).toDateString() === yesterday,
         )
 
+        let newStreak = player.streak
+
+        if (completedToday) {
+          // If completed today, increment streak only if also completed yesterday or starting new streak
+          if (completedYesterday) {
+            newStreak = player.streak + 1
+          } else if (player.streak === 0) {
+            // Starting a fresh streak
+            newStreak = 1
+          }
+          // else: streak already counted for today, don't increment again
+        } else if (completedYesterday) {
+          // Completed yesterday but not today - preserve streak for now
+          newStreak = player.streak
+        } else {
+          // Gap detected - reset streak
+          newStreak = 0
+        }
+
         set((state) => ({
           player: {
             ...state.player,
-            streak: completedToday ? state.player.streak : completedYesterday ? state.player.streak : 0,
+            streak: newStreak,
           },
         }))
       },
@@ -290,13 +325,13 @@ export const usePlayerStore = create<PlayerStore>()(
       convertDiaryToReflection: async (diaryId: string) => {
         const { diaryEntries, reflections } = get()
         const diaryEntry = diaryEntries.find((entry) => entry.id === diaryId)
-        
+
         if (!diaryEntry || diaryEntry.convertedToReflection) return
 
         try {
           const { convertDiaryToReflection } = await import("@/lib/ai-stats")
           const reflection = await convertDiaryToReflection(diaryEntry)
-          
+
           const newReflection: PersonalReflection = {
             ...reflection,
             timestamp: new Date(),
@@ -307,7 +342,7 @@ export const usePlayerStore = create<PlayerStore>()(
             diaryEntries: state.diaryEntries.map((entry) =>
               entry.id === diaryId
                 ? { ...entry, convertedToReflection: true, reflectionId: newReflection.timestamp.toString() }
-                : entry
+                : entry,
             ),
           }))
 
@@ -331,15 +366,16 @@ export const usePlayerStore = create<PlayerStore>()(
       // Advanced Analytics Methods
       updateDetailedTracking: () => {
         const { completedQuests, reflections, player } = get()
-        
+
         // Update quest history
-        const questHistory = completedQuests.map(quest => ({
+        const questHistory = completedQuests.map((quest) => ({
           id: quest.id,
           title: quest.title,
           completedAt: quest.completedAt!,
-          timeToComplete: quest.completedAt && quest.createdAt 
-            ? (new Date(quest.completedAt).getTime() - new Date(quest.createdAt).getTime()) / (1000 * 60 * 60) // hours
-            : 0,
+          timeToComplete:
+            quest.completedAt && quest.createdAt
+              ? (new Date(quest.completedAt).getTime() - new Date(quest.createdAt).getTime()) / (1000 * 60 * 60) // hours
+              : 0,
           difficulty: quest.difficulty,
           realm: quest.realm,
           xp: quest.xp,
@@ -347,17 +383,17 @@ export const usePlayerStore = create<PlayerStore>()(
         }))
 
         // Update mood history
-        const moodHistory: MoodTrend[] = reflections.map(reflection => {
+        const moodHistory: MoodTrend[] = reflections.map((reflection) => {
           const date = new Date(reflection.timestamp).toDateString()
-          const dayQuests = completedQuests.filter(q => 
-            q.completedAt && new Date(q.completedAt).toDateString() === date
+          const dayQuests = completedQuests.filter(
+            (q) => q.completedAt && new Date(q.completedAt).toDateString() === date,
           )
-          
+
           return {
             date,
             mood: reflection.mood,
             emotionalState: reflection.emotionalState,
-            motivationLevel: parseInt(reflection.motivationLevel) || 5,
+            motivationLevel: Number.parseInt(reflection.motivationLevel) || 5,
             questsCompleted: dayQuests.length,
             xpEarned: dayQuests.reduce((sum, q) => sum + q.xp, 0),
           }
@@ -378,12 +414,10 @@ export const usePlayerStore = create<PlayerStore>()(
         }).reverse()
 
         // Daily averages
-        const dailyQuests = last7Days.map(date => 
-          completedQuests.filter(q => 
-            q.completedAt && new Date(q.completedAt).toDateString() === date
-          )
+        const dailyQuests = last7Days.map((date) =>
+          completedQuests.filter((q) => q.completedAt && new Date(q.completedAt).toDateString() === date),
         )
-        
+
         const dailyAverage = {
           questsCompleted: dailyQuests.reduce((sum, day) => sum + day.length, 0) / 7,
           xpEarned: dailyQuests.reduce((sum, day) => sum + day.reduce((daySum, q) => daySum + q.xp, 0), 0) / 7,
@@ -391,33 +425,37 @@ export const usePlayerStore = create<PlayerStore>()(
         }
 
         // Weekly stats
-        const weeklyQuests = completedQuests.filter(q => 
-          q.completedAt && last7Days.includes(new Date(q.completedAt).toDateString())
+        const weeklyQuests = completedQuests.filter(
+          (q) => q.completedAt && last7Days.includes(new Date(q.completedAt).toDateString()),
         )
-        
+
         const weeklyStats = {
           totalQuests: weeklyQuests.length,
           totalXP: weeklyQuests.reduce((sum, q) => sum + q.xp, 0),
-          averageMood: moodHistory.slice(-7).reduce((sum, m) => sum + m.motivationLevel, 0) / Math.max(moodHistory.slice(-7).length, 1),
+          averageMood:
+            moodHistory.slice(-7).reduce((sum, m) => sum + m.motivationLevel, 0) /
+            Math.max(moodHistory.slice(-7).length, 1),
           mostProductiveDay: last7Days.reduce((most, date) => {
-            const dayQuests = completedQuests.filter(q => 
-              q.completedAt && new Date(q.completedAt).toDateString() === date
+            const dayQuests = completedQuests.filter(
+              (q) => q.completedAt && new Date(q.completedAt).toDateString() === date,
             )
-            const mostQuests = completedQuests.filter(q => 
-              q.completedAt && new Date(q.completedAt).toDateString() === most
+            const mostQuests = completedQuests.filter(
+              (q) => q.completedAt && new Date(q.completedAt).toDateString() === most,
             )
             return dayQuests.length > mostQuests.length ? date : most
           }, last7Days[0]),
         }
 
         // Monthly progress
-        const monthlyQuests = completedQuests.filter(q => 
-          q.completedAt && last30Days.includes(new Date(q.completedAt).toDateString())
+        const monthlyQuests = completedQuests.filter(
+          (q) => q.completedAt && last30Days.includes(new Date(q.completedAt).toDateString()),
         )
-        
+
         const monthlyProgress = {
           levelUps: 0, // This would need to be tracked separately
-          achievementsUnlocked: get().achievements.filter(a => a.unlocked && a.unlockedAt && last30Days.includes(new Date(a.unlockedAt).toDateString())).length,
+          achievementsUnlocked: get().achievements.filter(
+            (a) => a.unlocked && a.unlockedAt && last30Days.includes(new Date(a.unlockedAt).toDateString()),
+          ).length,
           statGrowth: {}, // This would need to be calculated from stat history
         }
 
@@ -430,28 +468,40 @@ export const usePlayerStore = create<PlayerStore>()(
           "Heart & Loyalty": { questsCompleted: 0, xpEarned: 0, averageDifficulty: "Easy" },
         }
 
-        completedQuests.forEach(quest => {
+        completedQuests.forEach((quest) => {
           const realm = realmPerformance[quest.realm]
           realm.questsCompleted++
           realm.xpEarned += quest.xp
         })
 
         // Calculate average difficulty per realm
-        Object.keys(realmPerformance).forEach(realmKey => {
+        Object.keys(realmPerformance).forEach((realmKey) => {
           const realm = realmPerformance[realmKey as keyof typeof realmPerformance]
-          const realmQuests = completedQuests.filter(q => q.realm === realmKey)
+          const realmQuests = completedQuests.filter((q) => q.realm === realmKey)
           if (realmQuests.length > 0) {
-            const difficulties = realmQuests.map(q => {
+            const difficulties = realmQuests.map((q) => {
               switch (q.difficulty) {
-                case "Easy": return 1
-                case "Medium": return 2
-                case "Hard": return 3
-                case "Life Achievement": return 4
-                default: return 1
+                case "Easy":
+                  return 1
+                case "Medium":
+                  return 2
+                case "Hard":
+                  return 3
+                case "Life Achievement":
+                  return 4
+                default:
+                  return 1
               }
             })
             const avgDifficulty = difficulties.reduce((sum, d) => sum + d, 0) / difficulties.length
-            realm.averageDifficulty = avgDifficulty <= 1.5 ? "Easy" : avgDifficulty <= 2.5 ? "Medium" : avgDifficulty <= 3.5 ? "Hard" : "Life Achievement"
+            realm.averageDifficulty =
+              avgDifficulty <= 1.5
+                ? "Easy"
+                : avgDifficulty <= 2.5
+                  ? "Medium"
+                  : avgDifficulty <= 3.5
+                    ? "Hard"
+                    : "Life Achievement"
           }
         })
 

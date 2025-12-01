@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Home, Sword, MessageSquare, BarChart3, Award, Settings, Menu, X, TrendingUp, BookOpen } from "lucide-react"
+import { Home, Sword, MessageSquare, BarChart3, Award, Settings, Menu, X, TrendingUp } from "lucide-react"
 
 interface MobileNavigationProps {
   activeTab: string
@@ -18,7 +18,6 @@ export function MobileNavigation({ activeTab, onTabChange }: MobileNavigationPro
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "quests", label: "Quests", icon: Sword },
     { id: "reflection", label: "Reflection", icon: MessageSquare },
-    { id: "diary", label: "Diary", icon: BookOpen },
     { id: "analytics", label: "Analytics", icon: TrendingUp },
     { id: "stats", label: "Stats", icon: BarChart3 },
     { id: "achievements", label: "Achievements", icon: Award },
@@ -27,14 +26,14 @@ export function MobileNavigation({ activeTab, onTabChange }: MobileNavigationPro
 
   useEffect(() => {
     setMounted(true)
-    
+
     const checkMobile = () => {
-      if (typeof window === 'undefined') return
+      if (typeof window === "undefined") return
       setIsMobile(window.innerWidth < 768)
     }
 
     checkMobile()
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       window.addEventListener("resize", checkMobile)
       return () => window.removeEventListener("resize", checkMobile)
     }
@@ -45,7 +44,7 @@ export function MobileNavigation({ activeTab, onTabChange }: MobileNavigationPro
     setIsMenuOpen(false)
 
     // Haptic feedback for mobile
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate(50)
     }
   }
@@ -54,7 +53,7 @@ export function MobileNavigation({ activeTab, onTabChange }: MobileNavigationPro
   if (!mounted) {
     return (
       <div className="tabs-themed rounded-lg mb-6">
-        <div className="grid grid-cols-8 p-1 gap-1">
+        <div className="grid grid-cols-7 p-1 gap-1">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -78,7 +77,7 @@ export function MobileNavigation({ activeTab, onTabChange }: MobileNavigationPro
     // Desktop horizontal tabs
     return (
       <div className="tabs-themed rounded-lg mb-6">
-        <div className="grid grid-cols-8 p-1 gap-1">
+        <div className="grid grid-cols-7 p-1 gap-1">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}

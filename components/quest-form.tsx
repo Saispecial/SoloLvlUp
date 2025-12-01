@@ -108,15 +108,17 @@ export function QuestForm({ onSubmit, onClose, editQuest, isEditing = false }: Q
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="card-themed w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-themed-text">{isEditing ? "Edit Quest" : "Create New Quest"}</h2>
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-themed-text">
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+      <div className="card-themed w-full max-w-2xl max-h-[90vh] flex flex-col">
+        {/* Header - stays fixed at top */}
+        <div className="flex items-center justify-between p-6 border-b border-themed-border flex-shrink-0">
+          <h2 className="text-xl font-bold text-themed-text">{isEditing ? "Edit Quest" : "Create New Quest"}</h2>
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-themed-text">
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
 
+        {/* Content - scrollable area */}
+        <div className="flex-1 overflow-y-auto p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="title" className="text-themed-text">
@@ -288,20 +290,25 @@ export function QuestForm({ onSubmit, onClose, editQuest, isEditing = false }: Q
               </Label>
             </div>
 
-            <Button type="submit" className="w-full btn-primary">
-              {isEditing ? (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Quest
-                </>
-              )}
-            </Button>
+            <div className="pt-2" />
           </form>
+        </div>
+
+        {/* Footer - sticky at bottom with submit button */}
+        <div className="p-6 border-t border-themed-border flex-shrink-0 bg-card-themed">
+          <Button type="submit" onClick={(e) => handleSubmit(e as any)} className="w-full btn-primary">
+            {isEditing ? (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Quest
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>
