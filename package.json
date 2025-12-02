@@ -6,7 +6,7 @@
     "android": "npm run build && cap sync android && cap open android",
     "android:build": "npm run build && cap sync android && cap build android",
     "android:run": "npm run build && cap sync android && cap run android",
-    "build": "next build && next export",
+    "build": "next build",
     "cap:add:android": "cap add android",
     "cap:open": "cap open android",
     "cap:sync": "cap sync",
