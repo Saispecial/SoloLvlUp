@@ -8,20 +8,12 @@ const BACKOFF_MS = 500
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as { player: PlayerProfile }
-    console.log("[arise-quests] Generating Arise Quests for player level:", body.player.level)
+    console.log("Generating Arise Quests for player level:", body.player.level)
 
     const apiKey = process.env.GEMINI_API_KEY
 
     if (!apiKey) {
-      console.error("[arise-quests] Missing GEMINI_API_KEY environment variable")
-      return NextResponse.json({
-        quests: getFallbackQuests(),
-        suggestions: {
-          focusArea: "Overall Personal Development",
-          motivation: "Each small action compounds over time. You're building the habits of a champion!",
-          emotionalGuidance: "Focus on consistency rather than perfection. Progress comes from showing up every day.",
-        },
-      })
+      return NextResponse.json({ error: "Missing GEMINI_API_KEY" }, { status: 500 })
     }
 
     const payload = {
@@ -51,24 +43,73 @@ export async function POST(req: NextRequest) {
       }
 
       if (googleRes.status !== 503) {
-        console.error("[arise-quests] Gemini API error:", googleRes.status)
-        return NextResponse.json({
-          quests: getFallbackQuests(),
-          suggestions: {
-            focusArea: "Overall Personal Development",
-            motivation: "Each small action compounds over time. You're building the habits of a champion!",
-            emotionalGuidance: "Focus on consistency rather than perfection. Progress comes from showing up every day.",
-          },
-        })
+        return NextResponse.json({ error: "Gemini API error" }, { status: googleRes.status })
       }
 
       await new Promise((r) => setTimeout(r, BACKOFF_MS * (attempt + 1)))
       attempt++
     }
 
-    // Fallback after max retries
+    // Fallback quests for general self-improvement
     return NextResponse.json({
-      quests: getFallbackQuests(),
+      quests: [
+        {
+          title: "Morning Hydration Ritual",
+          description: "Drink a full glass of water first thing in the morning to hydrate and energize your body",
+          type: "Daily",
+          difficulty: "Easy",
+          xp: 10,
+          realm: "Body & Discipline",
+        },
+        {
+          title: "Practice Gratitude",
+          description: "Write down 3 things you're grateful for today to cultivate a positive mindset",
+          type: "Daily",
+          difficulty: "Easy",
+          xp: 10,
+          realm: "Emotional & Spiritual",
+        },
+        {
+          title: "Read for Growth",
+          description: "Spend 20 minutes reading an article, book, or educational content to expand your knowledge",
+          type: "Daily",
+          difficulty: "Easy",
+          xp: 10,
+          realm: "Mind & Skill",
+        },
+        {
+          title: "Evening Reflection",
+          description: "Spend 10 minutes reflecting on what went well today and what you learned",
+          type: "Daily",
+          difficulty: "Easy",
+          xp: 10,
+          realm: "Emotional & Spiritual",
+        },
+        {
+          title: "Physical Activity Challenge",
+          description: "Do 30 minutes of physical activity - walking, stretching, dancing, or any movement you enjoy",
+          type: "Daily",
+          difficulty: "Medium",
+          xp: 25,
+          realm: "Body & Discipline",
+        },
+        {
+          title: "Learn a New Skill",
+          description: "Dedicate 30 minutes to learning something new that interests you or improves your abilities",
+          type: "Daily",
+          difficulty: "Medium",
+          xp: 25,
+          realm: "Mind & Skill",
+        },
+        {
+          title: "Connect with Someone",
+          description: "Reach out to a friend, family member, or colleague for a genuine conversation",
+          type: "Daily",
+          difficulty: "Medium",
+          xp: 25,
+          realm: "Heart & Loyalty",
+        },
+      ],
       suggestions: {
         focusArea: "Overall Personal Development",
         motivation: "Each small action compounds over time. You're building the habits of a champion!",
@@ -76,77 +117,9 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[arise-quests] Error:", error)
-    return NextResponse.json({
-      quests: getFallbackQuests(),
-      suggestions: {
-        focusArea: "Overall Personal Development",
-        motivation: "Each small action compounds over time. You're building the habits of a champion!",
-        emotionalGuidance: "Focus on consistency rather than perfection. Progress comes from showing up every day.",
-      },
-    })
+    console.error("Error in Arise Quests generation:", error)
+    return NextResponse.json({ error: "Failed to generate Arise Quests" }, { status: 500 })
   }
-}
-
-function getFallbackQuests() {
-  return [
-    {
-      title: "Morning Hydration Ritual",
-      description: "Drink a full glass of water first thing in the morning to hydrate and energize your body",
-      type: "Daily",
-      difficulty: "Easy",
-      xp: 10,
-      realm: "Body & Discipline",
-    },
-    {
-      title: "Practice Gratitude",
-      description: "Write down 3 things you're grateful for today to cultivate a positive mindset",
-      type: "Daily",
-      difficulty: "Easy",
-      xp: 10,
-      realm: "Emotional & Spiritual",
-    },
-    {
-      title: "Read for Growth",
-      description: "Spend 20 minutes reading an article, book, or educational content to expand your knowledge",
-      type: "Daily",
-      difficulty: "Easy",
-      xp: 10,
-      realm: "Mind & Skill",
-    },
-    {
-      title: "Evening Reflection",
-      description: "Spend 10 minutes reflecting on what went well today and what you learned",
-      type: "Daily",
-      difficulty: "Easy",
-      xp: 10,
-      realm: "Emotional & Spiritual",
-    },
-    {
-      title: "Physical Activity Challenge",
-      description: "Do 30 minutes of physical activity - walking, stretching, dancing, or any movement you enjoy",
-      type: "Daily",
-      difficulty: "Medium",
-      xp: 25,
-      realm: "Body & Discipline",
-    },
-    {
-      title: "Learn a New Skill",
-      description: "Dedicate 30 minutes to learning something new that interests you or improves your abilities",
-      type: "Daily",
-      difficulty: "Medium",
-      xp: 25,
-      realm: "Mind & Skill",
-    },
-    {
-      title: "Connect with Someone",
-      description: "Reach out to a friend, family member, or colleague for a genuine conversation",
-      type: "Daily",
-      difficulty: "Medium",
-      xp: 25,
-      realm: "Heart & Loyalty",
-    },
-  ]
 }
 
 function buildAriseQuestsPrompt(player: PlayerProfile) {
@@ -174,7 +147,7 @@ Generate quests across these realms:
 5. Heart & Loyalty (boosts EQ, Strength) - Connections, helping others, relationships
 
 Quest Types to generate:
-- Daily: 5-7 small, achievable daily tasks (10-25 XP each)
+- Daily: 5-7 small, achievable daily tasks (10-25 XP each) - These should be universal habits everyone can build
 - Normal: 1-2 medium-term goals (25-50 XP each)
 - Weekly: 1 consistent weekly habit (50 XP)
 

@@ -61,6 +61,19 @@ export function SettingsPage({ player, onUpdateName, onThemeChange, onReset }: S
     { id: "deep-space", name: "Deep Space", icon: Compass, description: "Galaxy-inspired gradients" },
     { id: "inferno-red", name: "Inferno Red", icon: Flame, description: "Dark with fiery red tones" },
     { id: "emerald-forest", name: "Emerald Forest", icon: Leaf, description: "Rich green forest theme" },
+    { id: "royal-purple", name: "Royal Purple", icon: Crown, description: "Elegant purple royalty theme" },
+    { id: "crimson-dawn", name: "Crimson Dawn", icon: Sunrise, description: "Deep crimson highlights" },
+    { id: "ocean-breeze", name: "Ocean Breeze", icon: Waves, description: "Calming cyan sea theme" },
+    { id: "sunset-orange", name: "Sunset Orange", icon: Sunset, description: "Warm orange sunset colors" },
+    { id: "golden-dawn", name: "Golden Dawn", icon: Sun, description: "Radiant yellow sunrise theme" },
+    { id: "neon-yellow", name: "Neon Yellow", icon: Sparkles, description: "Vibrant electric yellow glow" },
+    { id: "dark-forest", name: "Dark Forest", icon: TreePine, description: "Deep emerald forest theme" },
+    { id: "deep-cyan", name: "Deep Cyan", icon: Droplet, description: "Rich dark cyan waters" },
+    { id: "aurora-borealis", name: "Aurora Borealis", icon: Star, description: "Northern lights green glow" },
+    { id: "midnight-storm", name: "Midnight Storm", icon: Lightning, description: "Dark stormy indigo theme" },
+    { id: "cosmic-purple", name: "Cosmic Purple", icon: Palette, description: "Deep space purple theme" },
+    { id: "neon-pink", name: "Neon Pink", icon: Heart, description: "Vibrant pink neon theme" },
+    { id: "golden-sunset", name: "Golden Sunset", icon: Sunset, description: "Warm golden sunset theme" },
   ] as const
 
   const handleReset = () => {

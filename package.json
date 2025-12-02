@@ -3,24 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "android": "npm run build && cap sync android && cap open android",
-    "android:build": "npm run build && cap sync android && cap build android",
-    "android:run": "npm run build && cap sync android && cap run android",
     "build": "next build",
-    "cap:add:android": "cap add android",
-    "cap:open": "cap open android",
-    "cap:sync": "cap sync",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start"
   },
   "dependencies": {
-    "@capacitor/android": "^6.1.0",
-    "@capacitor/app": "latest",
-    "@capacitor/core": "^6.1.0",
-    "@capacitor/keyboard": "latest",
-    "@capacitor/splash-screen": "latest",
-    "@capacitor/status-bar": "latest",
     "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "latest",
@@ -78,7 +66,6 @@
     "zustand": "latest"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

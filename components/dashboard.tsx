@@ -19,12 +19,29 @@ import { FloatingElements } from "./floating-elements"
 import { AnalyticsDashboard } from "./analytics-dashboard"
 import { motion } from "framer-motion"
 
-import { Plus, Sparkles, Zap } from "lucide-react"
 import type { Quest } from "@/lib/types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+
+const PlusIcon = () => (
+  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+  </svg>
+)
+
+const SparklesIcon = () => (
+  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M13 10V3L4 14h7v7l9-11h-7l1-8z" />
+  </svg>
+)
+
+const ZapIcon = () => (
+  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+  </svg>
+)
 
 const Dashboard = forwardRef(function Dashboard(props, ref) {
   const {
@@ -184,7 +201,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
                       setShowQuestForm(true)
                     }}
                   >
-                    <Plus className="h-4 w-4" />
+                    <PlusIcon />
                     {isMobile ? "New" : "New Quest"}
                   </button>
                   <button
@@ -192,7 +209,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
                     disabled={isGenerating}
                     onClick={generateNewQuests}
                   >
-                    <Sparkles className="h-4 w-4" />
+                    <SparklesIcon />
                     {isGenerating ? "Generating..." : isMobile ? "AI" : "AI Quests"}
                   </button>
                   <button
@@ -200,7 +217,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
                     disabled={isGeneratingAriseQuests}
                     onClick={generateAriseQuests}
                   >
-                    <Zap className="h-4 w-4" />
+                    <ZapIcon />
                     {isGeneratingAriseQuests ? "Generating..." : "Arise Quests"}
                   </button>
                 </div>
@@ -268,7 +285,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
               <ResponsiveCard mobileClassName="mx-4" className="text-center py-8">
                 <div className="text-themed-text opacity-60">
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-themed-primary/20 flex items-center justify-center">
-                    <Plus className="w-8 h-8 text-themed-primary" />
+                    <PlusIcon />
                   </div>
                   <p className="mb-4">No active quests yet</p>
                   <button
