@@ -1,30 +1,28 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { motion } from "framer-motion"
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Calendar, 
-  Target, 
-  Brain, 
-  Heart, 
-  Dumbbell, 
-  Palette, 
+import {
+  BarChart3,
+  TrendingUp,
+  Calendar,
+  Target,
+  Brain,
+  Heart,
+  Dumbbell,
+  Palette,
   Users,
-  Clock,
   Zap,
   Award,
   Activity,
   LineChart,
   PieChart,
   BarChart,
-  Activity as ActivityIcon,
+  ActivityIcon,
   BookOpen,
-  Sparkles
+  Sparkles,
 } from "lucide-react"
 import { usePlayerStore } from "@/stores/player-store"
-import { ResponsiveCard } from "./responsive-card"
 import { AnimatedCounter } from "./animated-counter"
 import { Card3D } from "./3d-card"
 import { FuturisticProgressBar } from "./futuristic-progress-bar"
@@ -70,6 +68,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
     quests,
     completedQuests,
     getDiaryEntries,
+    reflections,
   } = usePlayerStore()
 
   const [activeTab, setActiveTab] = useState("overview")
@@ -105,30 +104,30 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
 
   // Generate real weekly data for charts (last 7 days)
   const getWeeklyActivityData = () => {
-    const days = [];
-    const now = new Date();
+    const days = []
+    const now = new Date()
     for (let i = 6; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(now.getDate() - i);
+      const date = new Date(now)
+      date.setDate(now.getDate() - i)
       days.push({
-        label: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        label: date.toLocaleDateString("en-US", { weekday: "short" }),
         dateString: date.toDateString(),
-      });
+      })
     }
     return days.map(({ label, dateString }) => {
-      const dayQuests = completedQuests.filter(q =>
-        q.completedAt && new Date(q.completedAt).toDateString() === dateString
-      );
+      const dayQuests = completedQuests.filter(
+        (q) => q.completedAt && new Date(q.completedAt).toDateString() === dateString,
+      )
       return {
         day: label,
         quests: dayQuests.length,
         xp: dayQuests.reduce((sum, q) => sum + q.xp, 0),
         // Optionally, you can add mood if you have it per day
-      };
-    });
-  };
+      }
+    })
+  }
 
-  const weeklyData = getWeeklyActivityData();
+  const weeklyData = getWeeklyActivityData()
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -177,7 +176,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
                 <div className="text-xs text-gray-400 mb-2">{data.day}</div>
                 <div className="space-y-1">
                   <div className="h-16 bg-gradient-to-t from-blue-500/20 to-blue-500/40 rounded-t flex items-end justify-center">
-                    <div 
+                    <div
                       className="w-full bg-gradient-to-t from-blue-400 to-cyan-400 rounded-t"
                       style={{ height: `${(data.quests / 5) * 100}%` }}
                     />
@@ -217,7 +216,29 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-300">Reflection Streak</span>
-              <span className="text-sm font-mono text-purple-400">{detailedTracking.moodHistory.length}</span>
+              <span className="text-sm font-mono text-purple-400">
+                {(() => {
+                  let consecutiveDays = 0
+                  const today = new Date()
+
+                  for (let i = 0; i < 365; i++) {
+                    const checkDate = new Date(today)
+                    checkDate.setDate(today.getDate() - i)
+                    const dateString = checkDate.toDateString()
+
+                    const hasReflection = reflections.some((r) => new Date(r.timestamp).toDateString() === dateString)
+
+                    if (hasReflection) {
+                      consecutiveDays++
+                    } else if (i > 0) {
+                      // Break on first missing day (but allow today to be missing)
+                      break
+                    }
+                  }
+
+                  return consecutiveDays
+                })()}
+              </span>
             </div>
           </div>
         </Card3D>
@@ -230,7 +251,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-300">Active Quests</span>
-              <span className="text-sm font-mono text-green-400">{quests.filter(q => !q.completed).length}</span>
+              <span className="text-sm font-mono text-green-400">{quests.filter((q) => !q.completed).length}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-300">Completed Quests</span>
@@ -257,7 +278,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           <LineChart className="w-5 h-5" />
           Mood & Motivation Trends
         </h3>
-        
+
         {/* Mood Chart */}
         <div className="mb-8">
           <h4 className="text-md font-medium text-gray-300 mb-4">Motivation Level Over Time</h4>
@@ -265,13 +286,13 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
             {moodTrends.slice(-7).map((trend, index) => (
               <div key={trend.date} className="flex-1 flex flex-col items-center">
                 <div className="w-full bg-gradient-to-t from-pink-500/20 to-pink-500/40 rounded-t flex items-end justify-center">
-                  <div 
+                  <div
                     className="w-full bg-gradient-to-t from-pink-400 to-purple-400 rounded-t"
                     style={{ height: `${(trend.motivationLevel / 10) * 100}%` }}
                   />
                 </div>
                 <div className="text-xs text-gray-400 mt-2">
-                  {new Date(trend.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {new Date(trend.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </div>
               </div>
             ))}
@@ -290,14 +311,12 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
               className="p-4 rounded-lg bg-gray-800/50 border border-gray-700"
             >
               <div className="flex justify-between items-start mb-2">
-                <span className="text-sm font-medium text-gray-300">
-                  {new Date(trend.date).toLocaleDateString()}
-                </span>
+                <span className="text-sm font-medium text-gray-300">{new Date(trend.date).toLocaleDateString()}</span>
                 <span className="text-sm font-mono text-pink-400">
                   {trend.questsCompleted} quests, {trend.xpEarned} XP
                 </span>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                 <div>
                   <span className="text-gray-400">Mood:</span>
@@ -314,7 +333,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
               </div>
             </motion.div>
           ))}
-          
+
           {moodTrends.length === 0 && (
             <div className="text-center py-8">
               <Heart className="w-12 h-12 text-gray-400 mx-auto mb-2 opacity-50" />
@@ -329,7 +348,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
             <BookOpen className="w-4 h-4" />
             Diary Entries
           </h4>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
               <div className="flex items-center gap-2 mb-1">
@@ -338,18 +357,18 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
               </div>
               <span className="text-2xl font-bold text-white">{diaryEntries.length}</span>
             </div>
-            
+
             <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="w-4 h-4 text-green-400" />
                 <span className="text-sm font-medium text-green-400">Converted</span>
               </div>
               <span className="text-2xl font-bold text-white">
-                {diaryEntries.filter(entry => entry.convertedToReflection).length}
+                {diaryEntries.filter((entry) => entry.convertedToReflection).length}
               </span>
             </div>
           </div>
-          
+
           {diaryEntries.length > 0 && (
             <div className="space-y-2">
               <h5 className="text-sm font-medium text-gray-300">Recent Entries</h5>
@@ -362,16 +381,10 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
                   className="p-3 rounded-lg bg-gray-800/30 border border-gray-700"
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <span className="text-xs text-gray-400">
-                      {new Date(entry.timestamp).toLocaleDateString()}
-                    </span>
-                    {entry.convertedToReflection && (
-                      <span className="text-xs text-green-400">✓ Converted</span>
-                    )}
+                    <span className="text-xs text-gray-400">{new Date(entry.timestamp).toLocaleDateString()}</span>
+                    {entry.convertedToReflection && <span className="text-xs text-green-400">✓ Converted</span>}
                   </div>
-                  <p className="text-sm text-gray-300 line-clamp-2">
-                    {entry.content.substring(0, 100)}...
-                  </p>
+                  <p className="text-sm text-gray-300 line-clamp-2">{entry.content.substring(0, 100)}...</p>
                 </motion.div>
               ))}
             </div>
@@ -389,7 +402,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           <PieChart className="w-5 h-5" />
           Realm Performance Distribution
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(realmPerformance).map(([realm, stats]) => (
             <div key={realm} className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
@@ -399,7 +412,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
                 </div>
                 <h4 className="font-semibold text-white truncate">{realm}</h4>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Quests:</span>
@@ -414,9 +427,11 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
                   <span className="font-mono text-white">{stats.averageDifficulty}</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
-                  <div 
+                  <div
                     className={`h-2 rounded-full bg-gradient-to-r ${realmColors[realm as Realm]}`}
-                    style={{ width: `${(stats.questsCompleted / Math.max(...Object.values(realmPerformance).map(s => s.questsCompleted))) * 100}%` }}
+                    style={{
+                      width: `${(stats.questsCompleted / Math.max(...Object.values(realmPerformance).map((s) => s.questsCompleted))) * 100}%`,
+                    }}
                   />
                 </div>
               </div>
@@ -431,7 +446,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           <BarChart className="w-5 h-5" />
           Realm Comparison
         </h3>
-        
+
         <div className="space-y-4">
           {Object.entries(realmPerformance).map(([realm, stats]) => (
             <div key={realm} className="space-y-2">
@@ -440,9 +455,11 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
                 <span className="text-sm font-mono text-purple-400">{stats.questsCompleted} quests</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-3">
-                <div 
+                <div
                   className={`h-3 rounded-full bg-gradient-to-r ${realmColors[realm as Realm]}`}
-                  style={{ width: `${(stats.questsCompleted / Math.max(...Object.values(realmPerformance).map(s => s.questsCompleted))) * 100}%` }}
+                  style={{
+                    width: `${(stats.questsCompleted / Math.max(...Object.values(realmPerformance).map((s) => s.questsCompleted))) * 100}%`,
+                  }}
                 />
               </div>
             </div>
@@ -459,7 +476,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           <Activity className="w-5 h-5" />
           Performance Metrics
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <h4 className="text-md font-medium text-gray-300">Daily Averages</h4>
@@ -494,13 +511,11 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
               />
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-400">Streak Days</span>
-                <span className="text-sm font-mono text-green-400">
-                  {performanceMetrics.dailyAverage.streakDays}
-                </span>
+                <span className="text-sm font-mono text-green-400">{performanceMetrics.dailyAverage.streakDays}</span>
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <h4 className="text-md font-medium text-gray-300">Weekly Stats</h4>
             <div className="space-y-3">
@@ -531,7 +546,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           <TrendingUp className="w-5 h-5" />
           Performance Trends
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-blue-400 mb-2">
@@ -564,7 +579,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           <Target className="w-5 h-5" />
           Level Progress
         </h3>
-        
+
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-300">Current Level</span>
@@ -572,7 +587,9 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-300">Current XP</span>
-            <span className="text-sm font-mono text-yellow-400">{player.xp} / {player.nextLevelXp}</span>
+            <span className="text-sm font-mono text-yellow-400">
+              {player.xp} / {player.nextLevelXp}
+            </span>
           </div>
           <FuturisticProgressBar
             value={player.xp}
@@ -595,7 +612,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           <BarChart3 className="w-5 h-5" />
           Stats Progress
         </h3>
-        
+
         <div className="space-y-4">
           {Object.entries(player.stats).map(([stat, value]) => (
             <div key={stat} className="space-y-2">
@@ -604,7 +621,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
                 <span className="text-sm font-mono text-cyan-400">{value}</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
-                <div 
+                <div
                   className="h-2 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full"
                   style={{ width: `${(value / 100) * 100}%` }}
                 />
@@ -620,7 +637,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
           <Award className="w-5 h-5" />
           Achievement Progress
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="text-center p-4 rounded-lg bg-purple-500/10 border border-purple-400/30">
             <div className="text-2xl font-bold text-purple-400 mb-2">
@@ -657,12 +674,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
   }
 
   return (
-    <motion.div
-      className="space-y-6"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <motion.div className="space-y-6" variants={containerVariants} initial="hidden" animate="visible">
       {/* User Details */}
       <UserDetails player={player} />
       {/* Header */}
@@ -680,9 +692,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
               key={range}
               onClick={() => setTimeRange(range)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                timeRange === range
-                  ? "bg-themed-primary text-white"
-                  : "text-gray-400 hover:text-white"
+                timeRange === range ? "bg-themed-primary text-white" : "text-gray-400 hover:text-white"
               }`}
             >
               {range}
@@ -712,9 +722,7 @@ export function AnalyticsDashboard({ isMobile = false }: AnalyticsDashboardProps
       </motion.div>
 
       {/* Content */}
-      <motion.div variants={itemVariants}>
-        {renderContent()}
-      </motion.div>
+      <motion.div variants={itemVariants}>{renderContent()}</motion.div>
     </motion.div>
   )
 }
@@ -731,12 +739,10 @@ function MetricCard({ title, value, subtitle, icon, color }: MetricCardProps) {
   return (
     <Card3D className="p-4 rounded-xl bg-gradient-to-br from-gray-900/80 to-gray-800/80 border border-gray-700">
       <div className="flex items-center justify-between mb-3">
-        <div className={`p-2 rounded-lg bg-gradient-to-r ${color}`}>
-          {icon}
-        </div>
+        <div className={`p-2 rounded-lg bg-gradient-to-r ${color}`}>{icon}</div>
         <span className="text-sm text-gray-400">{subtitle}</span>
       </div>
-      
+
       <div className="space-y-1">
         <h3 className="text-sm font-medium text-gray-300">{title}</h3>
         <p className="text-xl font-bold text-white">
@@ -761,7 +767,9 @@ function UserDetails({ player }: { player: any }) {
       </div>
       <div className="mt-2 md:mt-0 flex items-center gap-2">
         <span className="text-cyan-400 font-semibold">Accessed:</span>
-        <span className="text-white font-mono">{now.toLocaleDateString()} {now.toLocaleTimeString()}</span>
+        <span className="text-white font-mono">
+          {now.toLocaleDateString()} {now.toLocaleTimeString()}
+        </span>
       </div>
     </div>
   )

@@ -234,6 +234,7 @@ export const usePlayerStore = create<PlayerStore>()(
           reflections: [newReflection, ...(state.reflections || [])],
         }))
 
+        get().updateStreak()
         // Update detailed tracking after reflection
         get().updateDetailedTracking()
       },
@@ -255,7 +256,7 @@ export const usePlayerStore = create<PlayerStore>()(
       },
 
       updateStreak: () => {
-        const { completedQuests, player } = get()
+        const { completedQuests, reflections, player } = get()
         const today = new Date().toDateString()
         const yesterday = new Date(Date.now() - 86400000).toDateString()
 
@@ -263,23 +264,31 @@ export const usePlayerStore = create<PlayerStore>()(
           (q) => q.completedAt && new Date(q.completedAt).toDateString() === today,
         )
 
+        const reflectedToday = reflections.some((r) => new Date(r.timestamp).toDateString() === today)
+
         const completedYesterday = completedQuests.some(
           (q) => q.completedAt && new Date(q.completedAt).toDateString() === yesterday,
         )
 
+        const reflectedYesterday = reflections.some((r) => new Date(r.timestamp).toDateString() === yesterday)
+
+        // Consider both quests and reflections for streak
+        const hasActivityToday = completedToday || reflectedToday
+        const hasActivityYesterday = completedYesterday || reflectedYesterday
+
         let newStreak = player.streak
 
-        if (completedToday) {
-          // If completed today, increment streak only if also completed yesterday or starting new streak
-          if (completedYesterday) {
+        if (hasActivityToday) {
+          // If activity today, increment streak if also had activity yesterday or starting new streak
+          if (hasActivityYesterday) {
             newStreak = player.streak + 1
           } else if (player.streak === 0) {
             // Starting a fresh streak
             newStreak = 1
           }
           // else: streak already counted for today, don't increment again
-        } else if (completedYesterday) {
-          // Completed yesterday but not today - preserve streak for now
+        } else if (hasActivityYesterday) {
+          // Activity yesterday but not today - preserve streak for now
           newStreak = player.streak
         } else {
           // Gap detected - reset streak
