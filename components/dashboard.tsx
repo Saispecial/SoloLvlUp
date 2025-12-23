@@ -181,7 +181,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`space-y-4 ${isMobile ? "pb-24" : ""}`}
+            className={`space-y-4 ${isMobile ? "pb-24 pt-20 md:pt-0" : ""}`}
           >
             {/* Header */}
             <ResponsiveCard
@@ -308,7 +308,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`space-y-4 ${isMobile ? "pb-24 px-4" : ""}`}
+            className={`space-y-4 ${isMobile ? "pb-24 px-4 pt-20 md:pt-0" : ""}`}
           >
             <ResponsiveCard>
               <h3 className="text-lg font-semibold text-themed-text mb-4">Personal Reflection</h3>
@@ -398,7 +398,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`${isMobile ? "pb-24 px-4" : ""}`}
+            className={`${isMobile ? "pb-24 px-4 pt-20 md:pt-0" : ""}`}
           >
             <StatsPanel stats={player.stats} customAttributes={player.customAttributes} />
           </motion.div>
@@ -409,7 +409,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`${isMobile ? "pb-24 px-4" : ""}`}
+            className={`${isMobile ? "pb-24 px-4 pt-20 md:pt-0" : ""}`}
           >
             <AchievementsPanel achievements={achievements} completedQuests={completedQuests} />
           </motion.div>
@@ -420,7 +420,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`${isMobile ? "pb-24 px-4" : ""}`}
+            className={`${isMobile ? "pb-24 px-4 pt-20 md:pt-0" : ""}`}
           >
             <AnalyticsDashboard isMobile={isMobile} />
           </motion.div>
@@ -431,7 +431,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`${isMobile ? "pb-24 px-4" : ""}`}
+            className={`${isMobile ? "pb-24 px-4 pt-20 md:pt-0" : ""}`}
           >
             <SettingsPage
               player={player}
