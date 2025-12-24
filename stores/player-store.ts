@@ -164,6 +164,8 @@ export const usePlayerStore = create<PlayerStore>()(
           achievements: updatedAchievements,
         })
 
+        get().updateStreak()
+
         // Update detailed tracking
         get().updateDetailedTracking()
       },
@@ -256,39 +258,32 @@ export const usePlayerStore = create<PlayerStore>()(
       },
 
       updateStreak: () => {
-        const { completedQuests, reflections, player } = get()
+        const { completedQuests, player } = get()
         const today = new Date().toDateString()
         const yesterday = new Date(Date.now() - 86400000).toDateString()
 
+        // Streak now only requires quest completion, not reflections
         const completedToday = completedQuests.some(
           (q) => q.completedAt && new Date(q.completedAt).toDateString() === today,
         )
-
-        const reflectedToday = reflections.some((r) => new Date(r.timestamp).toDateString() === today)
 
         const completedYesterday = completedQuests.some(
           (q) => q.completedAt && new Date(q.completedAt).toDateString() === yesterday,
         )
 
-        const reflectedYesterday = reflections.some((r) => new Date(r.timestamp).toDateString() === yesterday)
-
-        // Consider both quests and reflections for streak
-        const hasActivityToday = completedToday || reflectedToday
-        const hasActivityYesterday = completedYesterday || reflectedYesterday
-
         let newStreak = player.streak
 
-        if (hasActivityToday) {
-          // If activity today, increment streak if also had activity yesterday or starting new streak
-          if (hasActivityYesterday) {
+        if (completedToday) {
+          // If completed quest today, increment streak if also completed yesterday or starting new streak
+          if (completedYesterday) {
             newStreak = player.streak + 1
           } else if (player.streak === 0) {
             // Starting a fresh streak
             newStreak = 1
           }
           // else: streak already counted for today, don't increment again
-        } else if (hasActivityYesterday) {
-          // Activity yesterday but not today - preserve streak for now
+        } else if (completedYesterday) {
+          // Completed yesterday but not today - preserve streak for now (grace period)
           newStreak = player.streak
         } else {
           // Gap detected - reset streak
@@ -442,8 +437,8 @@ export const usePlayerStore = create<PlayerStore>()(
           totalQuests: weeklyQuests.length,
           totalXP: weeklyQuests.reduce((sum, q) => sum + q.xp, 0),
           averageMood:
-            moodHistory.slice(-7).reduce((sum, m) => sum + m.motivationLevel, 0) /
-            Math.max(moodHistory.slice(-7).length, 1),
+            reflections.slice(-7).reduce((sum, m) => sum + Number.parseInt(m.motivationLevel) || 5, 0) /
+            Math.max(reflections.slice(-7).length, 1),
           mostProductiveDay: last7Days.reduce((most, date) => {
             const dayQuests = completedQuests.filter(
               (q) => q.completedAt && new Date(q.completedAt).toDateString() === date,
