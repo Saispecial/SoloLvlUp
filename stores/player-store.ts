@@ -126,6 +126,7 @@ export const usePlayerStore = create<PlayerStore>()(
       userId: null,
 
       setUserId: (userId: string | null) => {
+        console.log("[v0] Setting userId in store:", userId)
         set({ userId })
       },
 
@@ -209,7 +210,8 @@ export const usePlayerStore = create<PlayerStore>()(
       },
 
       addQuests: async (newQuests) => {
-        console.log("[addQuests] Adding quests:", newQuests)
+        console.log("[v0] addQuests called, userId:", get().userId)
+        console.log("[v0] addQuests called, quests to add:", newQuests.length)
         const { userId } = get()
         const questsWithIds = newQuests.map((quest) => ({
           ...quest,
@@ -223,18 +225,22 @@ export const usePlayerStore = create<PlayerStore>()(
           quests: [...state.quests, ...questsWithIds],
         }))
 
-        if (userId) {
-          console.log("[addQuests] Saving quests to Supabase...")
-          for (const quest of questsWithIds) {
-            const saved = await saveQuest(userId, quest as Quest)
-            console.log("[addQuests] Quest saved:", quest.id, saved)
-          }
-        }
+        const currentUserId = get().userId
+        console.log("[v0] Current userId after state update:", currentUserId)
 
-        setTimeout(() => {
-          const { quests } = get()
-          console.log("[addQuests] Final quests in store:", quests.length)
-        }, 100)
+        if (currentUserId) {
+          console.log("[v0] Saving quests to Supabase for user:", currentUserId)
+          for (const quest of questsWithIds) {
+            try {
+              const saved = await saveQuest(currentUserId, quest as Quest)
+              console.log("[v0] Quest saved result:", quest.id, saved)
+            } catch (error) {
+              console.error("[v0] Error saving quest:", quest.id, error)
+            }
+          }
+        } else {
+          console.warn("[v0] No userId available, quests not saved to Supabase!")
+        }
       },
 
       deleteQuest: async (questId: string) => {
@@ -294,6 +300,7 @@ export const usePlayerStore = create<PlayerStore>()(
       },
 
       setReflection: async (reflection) => {
+        console.log("[v0] setReflection called, userId:", get().userId)
         const { userId } = get()
         const newReflection = {
           ...reflection,
@@ -307,9 +314,18 @@ export const usePlayerStore = create<PlayerStore>()(
         get().updateStreak()
         get().updateDetailedTracking()
 
-        if (userId) {
-          await saveReflection(userId, newReflection)
-          await get().syncToSupabase()
+        const currentUserId = get().userId
+        if (currentUserId) {
+          console.log("[v0] Saving reflection to Supabase for user:", currentUserId)
+          try {
+            const saved = await saveReflection(currentUserId, newReflection)
+            console.log("[v0] Reflection saved result:", saved)
+            await get().syncToSupabase()
+          } catch (error) {
+            console.error("[v0] Error saving reflection:", error)
+          }
+        } else {
+          console.warn("[v0] No userId available, reflection not saved to Supabase!")
         }
       },
 
@@ -576,7 +592,6 @@ export const usePlayerStore = create<PlayerStore>()(
           lastActivityDate.setHours(0, 0, 0, 0)
         }
 
-        // Check if user completed at least one quest today
         const todayQuests = completedQuests.filter((q) => {
           if (!q.completedAt) return false
           const completedDate = new Date(q.completedAt)
@@ -587,21 +602,16 @@ export const usePlayerStore = create<PlayerStore>()(
         let newStreak = player.streak
 
         if (todayQuests.length > 0) {
-          // User has activity today
           if (!lastActivityDate) {
-            // First day
             newStreak = 1
           } else {
             const daysDiff = Math.floor((today.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24))
 
             if (daysDiff === 1) {
-              // Consecutive day
               newStreak = player.streak + 1
             } else if (daysDiff === 0) {
-              // Same day, maintain streak
               newStreak = player.streak
             } else {
-              // Streak broken, restart
               newStreak = 1
             }
           }
@@ -622,6 +632,16 @@ export const usePlayerStore = create<PlayerStore>()(
     }),
     {
       name: "player-store",
+      partialize: (state) => ({
+        player: state.player,
+        quests: state.quests,
+        completedQuests: state.completedQuests,
+        currentReflection: state.currentReflection,
+        reflections: state.reflections,
+        diaryEntries: state.diaryEntries,
+        achievements: state.achievements,
+        detailedTracking: state.detailedTracking,
+      }),
     },
   ),
 )
