@@ -2,30 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import {
-  Moon,
-  Zap,
-  Compass,
-  Flame,
-  Leaf,
-  Crown,
-  Sunrise,
-  Waves,
-  Sunset,
-  Pencil,
-  AlertTriangle,
-  Sun,
-  Sparkles,
-  TreePine,
-  Droplet,
-  Calendar,
-  Clock,
-  Mic,
-  Palette,
-  Star,
-  Heart,
-  Zap as Lightning,
-} from "lucide-react"
+import { Moon, Zap, Compass, Flame, Leaf, Pencil, AlertTriangle, Calendar, Clock, Mic, LogOut } from "lucide-react"
 import { format } from "date-fns"
 import type { PlayerProfile, Theme } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -37,12 +14,14 @@ interface SettingsPageProps {
   onUpdateName: (name: string) => void
   onThemeChange: (theme: Theme) => void
   onReset: () => void
+  onLogout: () => void
 }
 
-export function SettingsPage({ player, onUpdateName, onThemeChange, onReset }: SettingsPageProps) {
+export function SettingsPage({ player, onUpdateName, onThemeChange, onReset, onLogout }: SettingsPageProps) {
   const [name, setName] = useState(player.name)
   const [isEditingName, setIsEditingName] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"))
   const [selectedTime, setSelectedTime] = useState(format(new Date(), "HH:mm"))
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false)
@@ -66,6 +45,11 @@ export function SettingsPage({ player, onUpdateName, onThemeChange, onReset }: S
   const handleReset = () => {
     onReset()
     setShowResetConfirm(false)
+  }
+
+  const handleLogout = () => {
+    onLogout()
+    setShowLogoutConfirm(false)
   }
 
   return (
@@ -237,6 +221,44 @@ export function SettingsPage({ player, onUpdateName, onThemeChange, onReset }: S
                 >
                   <AlertTriangle className="w-5 h-5 mr-2" />
                   Reset Application
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-themed-text">Account</h2>
+        <div className="card-themed border border-orange-500/20 p-6">
+          <div className="space-y-4">
+            {showLogoutConfirm ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-orange-500">
+                  <LogOut className="w-6 h-6" />
+                  <p className="font-medium">Logout from your account?</p>
+                </div>
+                <p className="text-themed-text opacity-60">
+                  You will be logged out and redirected to the login page. You can sign back in anytime.
+                </p>
+                <div className="flex gap-3">
+                  <Button onClick={handleLogout} className="bg-orange-500 hover:bg-orange-600 text-white">
+                    Yes, Logout
+                  </Button>
+                  <Button onClick={() => setShowLogoutConfirm(false)} className="btn-secondary">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-themed-text opacity-60">Logout from your account and return to the login page.</p>
+                <Button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border border-orange-500/30"
+                >
+                  <LogOut className="w-5 h-5 mr-2" />
+                  Logout
                 </Button>
               </div>
             )}

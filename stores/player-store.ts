@@ -13,6 +13,7 @@ import type {
 } from "@/lib/types"
 import { createInitialPlayer, checkLevelUp, calculateStatGrowth, calculateNextLevelXp } from "@/lib/rpg-engine"
 import { ACHIEVEMENTS, checkAchievements } from "@/lib/achievements"
+import { saveQuest, deleteQuestFromDb, saveReflection, savePlayerStats } from "@/lib/supabase/data-service"
 
 interface PlayerStore {
   player: PlayerProfile
@@ -23,8 +24,10 @@ interface PlayerStore {
   diaryEntries: DiaryEntry[]
   achievements: Achievement[]
   detailedTracking: DetailedTracking
+  userId: string | null
 
   // Actions
+  setUserId: (userId: string | null) => void
   completeQuest: (questId: string) => void
   addQuests: (newQuests: Omit<Quest, "id" | "completed" | "createdAt">[]) => void
   deleteQuest: (questId: string) => void
@@ -41,6 +44,7 @@ interface PlayerStore {
   updateTheme: (theme: Theme) => void
   getReflections: () => PersonalReflection[]
   getDiaryEntries: () => DiaryEntry[]
+  syncToSupabase: () => Promise<void>
 
   // Advanced Analytics Actions
   updateDetailedTracking: () => void
@@ -100,26 +104,41 @@ export const usePlayerStore = create<PlayerStore>()(
       diaryEntries: [],
       achievements: ACHIEVEMENTS,
       detailedTracking: createInitialDetailedTracking(),
+      userId: null,
 
-      completeQuest: (questId: string) => {
-        const { quests, player, completedQuests, achievements } = get()
+      setUserId: (userId: string | null) => {
+        set({ userId })
+      },
+
+      syncToSupabase: async () => {
+        const { userId, player, achievements } = get()
+        if (!userId) return
+
+        await savePlayerStats(userId, {
+          level: player.level,
+          xp: player.totalXp,
+          streak: player.streak,
+          stats: player.stats,
+          achievements: achievements,
+        })
+      },
+
+      completeQuest: async (questId: string) => {
+        const { quests, player, completedQuests, achievements, userId } = get()
         const quest = quests.find((q) => q.id === questId)
 
         if (!quest || quest.completed) return
 
-        // Mark quest as completed
         const completedQuest = {
           ...quest,
           completed: true,
           completedAt: new Date(),
         }
 
-        // Calculate new XP and stats
         const newTotalXp = player.totalXp + quest.xp
         const newXp = player.xp + quest.xp
         const newStats = calculateStatGrowth(quest, player.stats)
 
-        // Apply custom stat boosts if defined
         if (quest.statBoosts) {
           Object.entries(quest.statBoosts).forEach(([stat, boost]) => {
             if (boost && boost > 0) {
@@ -128,13 +147,10 @@ export const usePlayerStore = create<PlayerStore>()(
           })
         }
 
-        // Check for level up
         const { levelUp, newLevel, newRank } = checkLevelUp(newTotalXp, player.level)
 
-        // Award skill points on level up
         const newSkillPoints = levelUp ? player.skillPoints + 1 : player.skillPoints
 
-        // Update player
         const updatedPlayer: PlayerProfile = {
           ...player,
           xp: levelUp ? newTotalXp - calculateNextLevelXp(newLevel - 1) : newXp,
@@ -148,7 +164,6 @@ export const usePlayerStore = create<PlayerStore>()(
 
         const newCompletedQuests = [...completedQuests, completedQuest]
 
-        // Check achievements
         const updatedAchievements = checkAchievements(
           updatedPlayer,
           newCompletedQuests,
@@ -166,12 +181,17 @@ export const usePlayerStore = create<PlayerStore>()(
 
         get().updateStreak()
 
-        // Update detailed tracking
         get().updateDetailedTracking()
+
+        if (userId) {
+          await saveQuest(userId, completedQuest)
+          await get().syncToSupabase()
+        }
       },
 
-      addQuests: (newQuests) => {
+      addQuests: async (newQuests) => {
         console.log("[addQuests] Adding quests:", newQuests)
+        const { userId } = get()
         const questsWithIds = newQuests.map((quest) => ({
           ...quest,
           id: Math.random().toString(36).substr(2, 9),
@@ -179,25 +199,46 @@ export const usePlayerStore = create<PlayerStore>()(
           createdAt: new Date(),
           isOverdue: quest.dueDate ? new Date() > new Date(quest.dueDate) : false,
         }))
+
         set((state) => ({
           quests: [...state.quests, ...questsWithIds],
         }))
+
+        if (userId) {
+          for (const quest of questsWithIds) {
+            await saveQuest(userId, quest as Quest)
+          }
+        }
+
         setTimeout(() => {
           const { quests } = get()
           console.log("[addQuests] Final quests state:", quests)
         }, 100)
       },
 
-      deleteQuest: (questId: string) => {
+      deleteQuest: async (questId: string) => {
+        const { userId } = get()
         set((state) => ({
           quests: state.quests.filter((q) => q.id !== questId),
         }))
+
+        if (userId) {
+          await deleteQuestFromDb(questId)
+        }
       },
 
-      editQuest: (questId: string, updates: Partial<Quest>) => {
+      editQuest: async (questId: string, updates: Partial<Quest>) => {
+        const { userId, quests } = get()
         set((state) => ({
           quests: state.quests.map((q) => (q.id === questId ? { ...q, ...updates } : q)),
         }))
+
+        if (userId) {
+          const updatedQuest = quests.find((q) => q.id === questId)
+          if (updatedQuest) {
+            await saveQuest(userId, { ...updatedQuest, ...updates } as Quest)
+          }
+        }
       },
 
       resetPlayer: () => {
@@ -226,7 +267,8 @@ export const usePlayerStore = create<PlayerStore>()(
         }))
       },
 
-      setReflection: (reflection) => {
+      setReflection: async (reflection) => {
+        const { userId } = get()
         const newReflection = {
           ...reflection,
           timestamp: new Date(),
@@ -237,81 +279,12 @@ export const usePlayerStore = create<PlayerStore>()(
         }))
 
         get().updateStreak()
-        // Update detailed tracking after reflection
         get().updateDetailedTracking()
-      },
 
-      addCustomAttribute: (name: string) => {
-        const { player } = get()
-        if (player.level >= 10 && player.skillPoints > 0) {
-          set((state) => ({
-            player: {
-              ...state.player,
-              customAttributes: {
-                ...state.player.customAttributes,
-                [name]: 1,
-              },
-              skillPoints: state.player.skillPoints - 1,
-            },
-          }))
+        if (userId) {
+          await saveReflection(userId, newReflection)
+          await get().syncToSupabase()
         }
-      },
-
-      updateStreak: () => {
-        const { completedQuests, player } = get()
-        const today = new Date().toDateString()
-        const yesterday = new Date(Date.now() - 86400000).toDateString()
-
-        // Streak now only requires quest completion, not reflections
-        const completedToday = completedQuests.some(
-          (q) => q.completedAt && new Date(q.completedAt).toDateString() === today,
-        )
-
-        const completedYesterday = completedQuests.some(
-          (q) => q.completedAt && new Date(q.completedAt).toDateString() === yesterday,
-        )
-
-        let newStreak = player.streak
-
-        if (completedToday) {
-          // If completed quest today, increment streak if also completed yesterday or starting new streak
-          if (completedYesterday) {
-            newStreak = player.streak + 1
-          } else if (player.streak === 0) {
-            // Starting a fresh streak
-            newStreak = 1
-          }
-          // else: streak already counted for today, don't increment again
-        } else if (completedYesterday) {
-          // Completed yesterday but not today - preserve streak for now (grace period)
-          newStreak = player.streak
-        } else {
-          // Gap detected - reset streak
-          newStreak = 0
-        }
-
-        set((state) => ({
-          player: {
-            ...state.player,
-            streak: newStreak,
-          },
-        }))
-      },
-
-      updatePlayerName: (name: string) => {
-        set((state) => ({
-          player: { ...state.player, name },
-        }))
-      },
-
-      updateTheme: (theme: Theme) => {
-        set((state) => ({
-          player: { ...state.player, theme },
-        }))
-      },
-
-      getReflections: () => {
-        return get().reflections
       },
 
       addDiaryEntry: async (content: string) => {
@@ -350,7 +323,6 @@ export const usePlayerStore = create<PlayerStore>()(
             ),
           }))
 
-          // Update detailed tracking after conversion
           get().updateDetailedTracking()
         } catch (error) {
           console.error("Error converting diary to reflection:", error)
@@ -367,18 +339,16 @@ export const usePlayerStore = create<PlayerStore>()(
         return get().diaryEntries
       },
 
-      // Advanced Analytics Methods
       updateDetailedTracking: () => {
         const { completedQuests, reflections, player } = get()
 
-        // Update quest history
         const questHistory = completedQuests.map((quest) => ({
           id: quest.id,
           title: quest.title,
           completedAt: quest.completedAt!,
           timeToComplete:
             quest.completedAt && quest.createdAt
-              ? (new Date(quest.completedAt).getTime() - new Date(quest.createdAt).getTime()) / (1000 * 60 * 60) // hours
+              ? (new Date(quest.completedAt).getTime() - new Date(quest.createdAt).getTime()) / (1000 * 60 * 60)
               : 0,
           difficulty: quest.difficulty,
           realm: quest.realm,
@@ -386,7 +356,6 @@ export const usePlayerStore = create<PlayerStore>()(
           statBoosts: quest.statBoosts || {},
         }))
 
-        // Update mood history
         const moodHistory: MoodTrend[] = reflections.map((reflection) => {
           const date = new Date(reflection.timestamp).toDateString()
           const dayQuests = completedQuests.filter(
@@ -403,7 +372,6 @@ export const usePlayerStore = create<PlayerStore>()(
           }
         })
 
-        // Calculate performance metrics
         const now = new Date()
         const last7Days = Array.from({ length: 7 }, (_, i) => {
           const date = new Date(now)
@@ -417,7 +385,6 @@ export const usePlayerStore = create<PlayerStore>()(
           return date.toDateString()
         }).reverse()
 
-        // Daily averages
         const dailyQuests = last7Days.map((date) =>
           completedQuests.filter((q) => q.completedAt && new Date(q.completedAt).toDateString() === date),
         )
@@ -428,7 +395,6 @@ export const usePlayerStore = create<PlayerStore>()(
           streakDays: player.streak,
         }
 
-        // Weekly stats
         const weeklyQuests = completedQuests.filter(
           (q) => q.completedAt && last7Days.includes(new Date(q.completedAt).toDateString()),
         )
@@ -450,20 +416,14 @@ export const usePlayerStore = create<PlayerStore>()(
           }, last7Days[0]),
         }
 
-        // Monthly progress
-        const monthlyQuests = completedQuests.filter(
-          (q) => q.completedAt && last30Days.includes(new Date(q.completedAt).toDateString()),
-        )
-
         const monthlyProgress = {
-          levelUps: 0, // This would need to be tracked separately
+          levelUps: 0,
           achievementsUnlocked: get().achievements.filter(
             (a) => a.unlocked && a.unlockedAt && last30Days.includes(new Date(a.unlockedAt).toDateString()),
           ).length,
-          statGrowth: {}, // This would need to be calculated from stat history
+          statGrowth: {},
         }
 
-        // Realm performance
         const realmPerformance = {
           "Mind & Skill": { questsCompleted: 0, xpEarned: 0, averageDifficulty: "Easy" },
           "Emotional & Spiritual": { questsCompleted: 0, xpEarned: 0, averageDifficulty: "Easy" },
@@ -473,12 +433,13 @@ export const usePlayerStore = create<PlayerStore>()(
         }
 
         completedQuests.forEach((quest) => {
-          const realm = realmPerformance[quest.realm]
-          realm.questsCompleted++
-          realm.xpEarned += quest.xp
+          const realm = realmPerformance[quest.realm as keyof typeof realmPerformance]
+          if (realm) {
+            realm.questsCompleted++
+            realm.xpEarned += quest.xp
+          }
         })
 
-        // Calculate average difficulty per realm
         Object.keys(realmPerformance).forEach((realmKey) => {
           const realm = realmPerformance[realmKey as keyof typeof realmPerformance]
           const realmQuests = completedQuests.filter((q) => q.realm === realmKey)
@@ -545,6 +506,38 @@ export const usePlayerStore = create<PlayerStore>()(
 
       getMonthlyProgress: () => {
         return get().detailedTracking.performanceMetrics.monthlyProgress
+      },
+
+      updateTheme: (theme: Theme) => {
+        set((state) => ({
+          player: { ...state.player, theme },
+        }))
+        if (typeof document !== "undefined") {
+          document.documentElement.className = `theme-${theme}`
+        }
+      },
+
+      addCustomAttribute: (name: string) => {
+        if (!name.trim()) return
+        set((state) => ({
+          player: {
+            ...state.player,
+            customAttributes: {
+              ...state.player.customAttributes,
+              [name]: 0,
+            },
+          },
+        }))
+      },
+
+      updatePlayerName: (name: string) => {
+        set((state) => ({
+          player: { ...state.player, name },
+        }))
+      },
+
+      getReflections: () => {
+        return get().reflections
       },
     }),
     {

@@ -1,6 +1,8 @@
 "use client"
 
 import type React from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 import { useState, useEffect, useImperativeHandle, forwardRef } from "react"
 import { generateQuests } from "@/lib/gemini-api"
@@ -50,7 +52,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
     completedQuests,
     achievements,
     currentReflection,
-    reflections = [],
+    reflections, // Use reflections array directly instead of getReflections function
     addQuests,
     completeQuest,
     deleteQuest,
@@ -60,7 +62,6 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
     addCustomAttribute,
     updatePlayerName,
     updateTheme,
-    getReflections,
   } = usePlayerStore()
 
   const [activeTab, setActiveTab] = useState("dashboard")
@@ -77,6 +78,9 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
   const [currentChallenges, setCurrentChallenges] = useState("")
   const [motivationLevel, setMotivationLevel] = useState("")
   const [reflectionError, setReflectionError] = useState("")
+
+  const router = useRouter()
+  const supabase = createClient()
 
   useEffect(() => {
     const checkMobile = () => {
@@ -159,6 +163,15 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
     setEmotionalState("")
     setCurrentChallenges("")
     setMotivationLevel("")
+  }
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      router.push("/auth/login")
+    } catch (error) {
+      console.error("Logout failed:", error)
+    }
   }
 
   useImperativeHandle(ref, () => ({
@@ -362,13 +375,13 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
             {/* Reflection History */}
             <ResponsiveCard>
               <h4 className="text-md font-semibold text-themed-text mb-2">Reflection History</h4>
-              {getReflections().length === 0 ? (
+              {reflections.length === 0 ? (
                 <div className="text-themed-text opacity-60 text-sm">
                   No reflections yet. Your saved reflections will appear here.
                 </div>
               ) : (
                 <div className="max-h-64 overflow-y-auto divide-y divide-themed-border">
-                  {getReflections().map((reflection, idx) => (
+                  {reflections.map((reflection, idx) => (
                     <div key={idx} className="py-2">
                       <div className="text-xs text-themed-text opacity-60 mb-1">
                         {new Date(reflection.timestamp).toLocaleString()}
@@ -438,6 +451,7 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
               onUpdateName={updatePlayerName}
               onThemeChange={updateTheme}
               onReset={resetPlayer}
+              onLogout={handleLogout}
             />
           </motion.div>
         )

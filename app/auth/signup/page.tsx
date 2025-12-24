@@ -25,6 +25,12 @@ export default function SignUpPage() {
     setIsLoading(true)
     setError(null)
 
+    if (!email.toLowerCase().endsWith("@gmail.com")) {
+      setError("Only Gmail addresses (@gmail.com) are allowed")
+      setIsLoading(false)
+      return
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       setIsLoading(false)
@@ -47,21 +53,11 @@ export default function SignUpPage() {
           data: {
             display_name: displayName,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
       if (signUpError) {
-        // Check if it's an SMTP/email error but user was still created
-        if (
-          signUpError.message.includes("Error sending confirmation email") ||
-          signUpError.message.includes("SMTP") ||
-          signUpError.message.includes("authentication failed")
-        ) {
-          // User was created successfully but email failed to send
-          router.push(`/auth/verify-email?email=${encodeURIComponent(email)}&smtp_error=true`)
-          return
-        } else if (signUpError.message.includes("already registered")) {
+        if (signUpError.message.includes("already registered")) {
           setError("This email is already registered. Please login instead.")
           setIsLoading(false)
           return
@@ -69,14 +65,12 @@ export default function SignUpPage() {
         throw signUpError
       }
 
-      if (data?.user) {
-        // Check if user has a session (email confirmation disabled)
-        if (data.session) {
-          router.push("/")
-        } else {
-          // Email confirmation enabled - redirect to verify page
-          router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`)
-        }
+      if (data?.user && data?.session) {
+        // Successfully signed up and logged in
+        router.push("/")
+      } else {
+        setError("Signup succeeded but session not created. Please try logging in.")
+        setIsLoading(false)
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -118,17 +112,18 @@ export default function SignUpPage() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email" className="text-slate-300">
-                    Email
+                    Gmail Address
                   </Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="hunter@sololevel.up"
+                    placeholder="yourname@gmail.com"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-slate-800/50 border-slate-700 text-white"
                   />
+                  <p className="text-xs text-slate-500">Only Gmail addresses are accepted</p>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="password" className="text-slate-300">

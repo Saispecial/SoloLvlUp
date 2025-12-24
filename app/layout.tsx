@@ -1,11 +1,13 @@
-import type { Metadata } from 'next'
-import './globals.css'
-import { TalkingAgent } from '../components/talking-agent'
+import type React from "react"
+import type { Metadata } from "next"
+import "./globals.css"
+import { TalkingAgent } from "../components/talking-agent"
+import { AuthProvider } from "@/lib/supabase/auth-provider"
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
+  title: "SoloLvlUp - Level Up Your Life",
+  description: "Gamify your personal growth with AI-powered quests",
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -16,8 +18,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <TalkingAgent />
-        {children}
+        <AuthProvider>
+          <TalkingAgent />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )
