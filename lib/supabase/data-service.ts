@@ -202,18 +202,51 @@ export async function initializeNewUser(userId: string, displayName: string) {
       xp: 0,
       streak: 0,
       stats: {
-        iq: 0,
-        eq: 0,
-        strength: 0,
-        charisma: 0,
-        wisdom: 0,
-        luck: 0,
-        technical_attribute: 0,
-        aptitude: 0,
-        problem_solving: 0,
+        IQ: 10,
+        EQ: 10,
+        Strength: 10,
+        "Technical Attribute": 10,
+        Aptitude: 10,
+        "Problem Solving": 10,
       },
       achievements: [],
     },
     { onConflict: "user_id" },
   )
+}
+
+// Delete all user data from database
+export async function resetUserData(userId: string) {
+  // Delete all quests
+  const { error: questsError } = await supabase.from("quests").delete().eq("user_id", userId)
+  if (questsError) console.error("Error deleting quests:", questsError)
+
+  // Delete all reflections
+  const { error: reflectionsError } = await supabase.from("reflections").delete().eq("user_id", userId)
+  if (reflectionsError) console.error("Error deleting reflections:", reflectionsError)
+
+  // Update existing player stats to initial values (don't insert new row)
+  const { error: statsError } = await supabase
+    .from("player_stats")
+    .update({
+      level: 1,
+      xp: 0,
+      streak: 0,
+      stats: {
+        IQ: 10,
+        EQ: 10,
+        Strength: 10,
+        "Technical Attribute": 10,
+        Aptitude: 10,
+        "Problem Solving": 10,
+      },
+      achievements: [],
+      last_activity_date: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+
+  if (statsError) console.error("Error resetting player stats:", statsError)
+
+  return !questsError && !reflectionsError && !statsError
 }

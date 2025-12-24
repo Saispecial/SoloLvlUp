@@ -13,7 +13,26 @@ import type {
 } from "@/lib/types"
 import { createInitialPlayer, checkLevelUp, calculateStatGrowth, calculateNextLevelXp } from "@/lib/rpg-engine"
 import { ACHIEVEMENTS, checkAchievements } from "@/lib/achievements"
-import { saveQuest, deleteQuestFromDb, saveReflection, savePlayerStats } from "@/lib/supabase/data-service"
+import {
+  saveQuest,
+  deleteQuestFromDb,
+  saveReflection,
+  savePlayerStats,
+  resetUserData,
+} from "@/lib/supabase/data-service"
+
+const generateUUID = (): string => {
+  // Use global crypto available in modern browsers
+  if (typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID()
+  }
+  // Fallback for environments without crypto.randomUUID
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === "x" ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
 
 interface PlayerStore {
   player: PlayerProfile
@@ -194,7 +213,7 @@ export const usePlayerStore = create<PlayerStore>()(
         const { userId } = get()
         const questsWithIds = newQuests.map((quest) => ({
           ...quest,
-          id: Math.random().toString(36).substr(2, 9),
+          id: generateUUID(),
           completed: false,
           createdAt: new Date(),
           isOverdue: quest.dueDate ? new Date() > new Date(quest.dueDate) : false,
@@ -241,7 +260,12 @@ export const usePlayerStore = create<PlayerStore>()(
         }
       },
 
-      resetPlayer: () => {
+      resetPlayer: async () => {
+        const { userId } = get()
+        if (userId) {
+          await resetUserData(userId)
+        }
+
         set({
           player: {
             ...createInitialPlayer(),
@@ -289,7 +313,7 @@ export const usePlayerStore = create<PlayerStore>()(
 
       addDiaryEntry: async (content: string) => {
         const newEntry: DiaryEntry = {
-          id: Math.random().toString(36).substr(2, 9),
+          id: generateUUID(),
           content,
           timestamp: new Date(),
           convertedToReflection: false,
