@@ -224,14 +224,16 @@ export const usePlayerStore = create<PlayerStore>()(
         }))
 
         if (userId) {
+          console.log("[addQuests] Saving quests to Supabase...")
           for (const quest of questsWithIds) {
-            await saveQuest(userId, quest as Quest)
+            const saved = await saveQuest(userId, quest as Quest)
+            console.log("[addQuests] Quest saved:", quest.id, saved)
           }
         }
 
         setTimeout(() => {
           const { quests } = get()
-          console.log("[addQuests] Final quests state:", quests)
+          console.log("[addQuests] Final quests in store:", quests.length)
         }, 100)
       },
 
@@ -562,6 +564,60 @@ export const usePlayerStore = create<PlayerStore>()(
 
       getReflections: () => {
         return get().reflections
+      },
+
+      updateStreak: () => {
+        const { player, completedQuests, reflections, userId } = get()
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        const lastActivityDate = player.lastActivityDate ? new Date(player.lastActivityDate) : null
+        if (lastActivityDate) {
+          lastActivityDate.setHours(0, 0, 0, 0)
+        }
+
+        // Check if user completed at least one quest today
+        const todayQuests = completedQuests.filter((q) => {
+          if (!q.completedAt) return false
+          const completedDate = new Date(q.completedAt)
+          completedDate.setHours(0, 0, 0, 0)
+          return completedDate.getTime() === today.getTime()
+        })
+
+        let newStreak = player.streak
+
+        if (todayQuests.length > 0) {
+          // User has activity today
+          if (!lastActivityDate) {
+            // First day
+            newStreak = 1
+          } else {
+            const daysDiff = Math.floor((today.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24))
+
+            if (daysDiff === 1) {
+              // Consecutive day
+              newStreak = player.streak + 1
+            } else if (daysDiff === 0) {
+              // Same day, maintain streak
+              newStreak = player.streak
+            } else {
+              // Streak broken, restart
+              newStreak = 1
+            }
+          }
+
+          set((state) => ({
+            player: {
+              ...state.player,
+              streak: newStreak,
+              lastActivityDate: today,
+            },
+          }))
+
+          if (userId) {
+            get().syncToSupabase()
+          }
+        }
       },
     }),
     {

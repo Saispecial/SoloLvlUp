@@ -90,6 +90,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const store = usePlayerStore.getState()
 
+        // This ensures data doesn't get wiped out by the persist middleware
+        const loadedQuests = userData.quests || []
+        const loadedReflections = userData.reflections || []
+
+        console.log("[v0] Loading quests:", loadedQuests.length)
+        console.log("[v0] Loading reflections:", loadedReflections.length)
+
+        const activeQuests = loadedQuests.filter((q: any) => !q.completed)
+        const completedQuests = loadedQuests.filter((q: any) => q.completed)
+
+        usePlayerStore.setState({
+          quests: activeQuests,
+          completedQuests: completedQuests,
+          reflections: loadedReflections,
+          currentReflection: loadedReflections[0] || null,
+        })
+
         // Update player profile with Supabase data
         store.updatePlayer({
           name: userData.profile?.display_name || displayName,
@@ -99,36 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           streak: userData.stats.streak || 0,
           stats: userData.stats.stats || store.player.stats,
         })
-
-        // Load quests from Supabase
-        if (userData.quests && userData.quests.length > 0) {
-          const activeQuests = userData.quests.filter((q: any) => !q.completed)
-          const completedQuests = userData.quests.filter((q: any) => q.completed)
-
-          usePlayerStore.setState({
-            quests: activeQuests,
-            completedQuests: completedQuests,
-          })
-        } else {
-          // No quests in Supabase - clear local quests
-          usePlayerStore.setState({
-            quests: [],
-            completedQuests: [],
-          })
-        }
-
-        // Load reflections from Supabase
-        if (userData.reflections && userData.reflections.length > 0) {
-          usePlayerStore.setState({
-            reflections: userData.reflections,
-            currentReflection: userData.reflections[0] || null,
-          })
-        } else {
-          usePlayerStore.setState({
-            reflections: [],
-            currentReflection: null,
-          })
-        }
 
         // Load achievements from Supabase or use defaults
         if (userData.stats.achievements && userData.stats.achievements.length > 0) {
