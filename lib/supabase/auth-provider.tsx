@@ -68,47 +68,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log("[v0] Syncing user data for:", userId)
 
-      // Set user ID in store
-      usePlayerStore.getState().setUserId(userId)
+      const store = usePlayerStore.getState()
+      store.setUserId(userId)
+      console.log("[v0] UserId set in store:", userId)
 
       // Load user data from Supabase
       const userData = await loadUserData(userId)
-      console.log("[v0] Loaded user data:", userData)
+      console.log("[v0] Loaded user data:", JSON.stringify(userData, null, 2))
 
       if (!userData.stats) {
         // New user - initialize data and reset local store
         console.log("[v0] New user detected, initializing...")
         await initializeNewUser(userId, displayName)
 
-        // Reset local store to fresh state
-        usePlayerStore.getState().resetPlayer()
-        usePlayerStore.getState().updatePlayerName(displayName)
-        usePlayerStore.getState().setUserId(userId)
+        // Reset local store to fresh state but KEEP the userId
+        store.resetPlayer()
+        store.updatePlayerName(displayName)
+        store.setUserId(userId) // Re-set userId after reset
+        console.log("[v0] New user initialized, userId restored:", userId)
       } else {
         // Existing user - load their data from Supabase
         console.log("[v0] Existing user, loading data from Supabase...")
 
-        const store = usePlayerStore.getState()
-
-        // This ensures data doesn't get wiped out by the persist middleware
         const loadedQuests = userData.quests || []
         const loadedReflections = userData.reflections || []
 
         console.log("[v0] Loading quests:", loadedQuests.length)
         console.log("[v0] Loading reflections:", loadedReflections.length)
 
-        const activeQuests = loadedQuests.filter((q: any) => !q.completed)
-        const completedQuests = loadedQuests.filter((q: any) => q.completed)
-
-        usePlayerStore.setState({
-          quests: activeQuests,
-          completedQuests: completedQuests,
-          reflections: loadedReflections,
-          currentReflection: loadedReflections[0] || null,
-        })
+        store.setQuestsFromDb(loadedQuests)
+        store.setReflectionsFromDb(loadedReflections)
 
         // Update player profile with Supabase data
-        store.updatePlayer({
+        store.setPlayerFromDb({
           name: userData.profile?.display_name || displayName,
           level: userData.stats.level || 1,
           xp: userData.stats.xp || 0,
@@ -127,6 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             achievements: ACHIEVEMENTS,
           })
         }
+
+        console.log("[v0] Final userId in store:", usePlayerStore.getState().userId)
       }
 
       console.log("[v0] User data sync complete")

@@ -19,6 +19,7 @@ import {
 import { usePlayerStore } from "@/stores/player-store"
 import { getGeminiInsight } from "@/lib/gemini-api"
 import type { PlayerProfile, Quest } from "@/lib/types"
+import { usePathname } from "next/navigation"
 
 // Add type declarations for SpeechRecognition
 declare global {
@@ -104,8 +105,13 @@ const getContextualPrompts = (player: PlayerProfile, completedQuests: Quest[], c
 }
 
 export function TalkingAgent() {
+  const pathname = usePathname()
+
   const {
     player,
+    // Remove unused stats, level from destructuring
+    // stats,
+    // level,
     getPerformanceMetrics,
     getMoodTrends,
     getWeeklyStats,
@@ -118,10 +124,14 @@ export function TalkingAgent() {
     getRealmPerformance,
   } = usePlayerStore()
 
+  const isAuthPage = pathname?.startsWith("/auth/")
+
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "agent",
-      text: `Hunter ${player.name || "Unknown"}, I'm ${agentName}. Ready to analyze your journey and provide guidance. How can I assist?`,
+      text: isAuthPage
+        ? `I'm ${agentName}. Ready to help you on your journey. How can I assist?`
+        : `Hunter ${player.name || "Unknown"}, I'm ${agentName}. Ready to analyze your journey and provide guidance. How can I assist?`,
       timestamp: new Date(),
       category: "general",
     },
@@ -1544,6 +1554,9 @@ Your level ${player.level} status shows you have a solid foundation. Now let's b
 
   // Don't render during SSR
   if (!mounted) return null
+  if (isAuthPage) {
+    return null
+  }
 
   const contextualPrompts = getContextualPrompts(player, completedQuests, context)
 

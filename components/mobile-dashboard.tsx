@@ -78,7 +78,7 @@ export function MobileDashboard({ player, quests, achievements }: MobileDashboar
         <MobileStatCard
           icon={<Flame className="w-5 h-5" />}
           label="Streak"
-          value={`${player.streak}`}
+          value={player.streak}
           suffix=" days"
           color="from-orange-400 to-red-500"
           highlight={player.streak > 0}
@@ -225,8 +225,14 @@ function MobileStatCard({ icon, label, value, suffix = "", color, highlight }: M
       <div className="text-white mb-2 flex justify-center">{icon}</div>
       <p className="text-white/80 text-xs mb-1">{label}</p>
       <p className="text-lg font-bold text-white">
-        <AnimatedCounter value={typeof value === "number" ? value : 0} suffix={suffix} />
-        {typeof value === "string" ? value : ""}
+        {typeof value === "number" ? (
+          <AnimatedCounter value={value} suffix={suffix} />
+        ) : (
+          <span>
+            {value}
+            {suffix}
+          </span>
+        )}
       </p>
     </ResponsiveCard>
   )
