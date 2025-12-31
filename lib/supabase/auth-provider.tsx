@@ -5,7 +5,7 @@ import { createClient } from "./client"
 import type { User } from "@supabase/supabase-js"
 import { loadUserData, initializeNewUser } from "./data-service"
 import { usePlayerStore } from "@/stores/player-store"
-import { ACHIEVEMENTS } from "@/lib/achievements"
+import { calculateNextLevelXp, calculateCurrentLevelXp } from "@/lib/rpg-engine"
 
 interface AuthContextType {
   user: User | null
@@ -66,66 +66,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const syncUserData = async (userId: string, displayName: string) => {
     try {
-      console.log("[v0] Syncing user data for:", userId)
+      console.log("[v0] syncUserData - READ-ONLY hydration for:", userId)
 
       const store = usePlayerStore.getState()
-      store.setUserId(userId)
-      console.log("[v0] UserId set in store:", userId)
 
-      // Load user data from Supabase
+      store.setUserId(userId)
+
+      // Load user data from Supabase - THIS IS THE SOURCE OF TRUTH
       const userData = await loadUserData(userId)
-      console.log("[v0] Loaded user data:", JSON.stringify(userData, null, 2))
+      console.log("[v0] Loaded from DB:", JSON.stringify(userData, null, 2))
 
       if (!userData.stats) {
-        // New user - initialize data and reset local store
-        console.log("[v0] New user detected, initializing...")
+        // New user - initialize in DB first
+        console.log("[v0] New user - initializing in DB first")
         await initializeNewUser(userId, displayName)
 
-        // Reset local store to fresh state but KEEP the userId
+        // Reset local store and re-fetch from DB
         store.resetPlayer()
+        store.setUserId(userId)
         store.updatePlayerName(displayName)
-        store.setUserId(userId) // Re-set userId after reset
-        console.log("[v0] New user initialized, userId restored:", userId)
       } else {
-        // Existing user - load their data from Supabase
-        console.log("[v0] Existing user, loading data from Supabase...")
+        console.log("[v0] Existing user - READ-ONLY hydration from DB")
 
-        const loadedQuests = userData.quests || []
-        const loadedReflections = userData.reflections || []
+        // Set quests and reflections directly from DB
+        store.setQuestsFromDb(userData.quests || [])
+        store.setReflectionsFromDb(userData.reflections || [])
 
-        console.log("[v0] Loading quests:", loadedQuests.length)
-        console.log("[v0] Loading reflections:", loadedReflections.length)
+        const dbTotalXp = userData.stats.xp || 0
+        const dbLevel = userData.stats.level || 1
+        const currentLevelXp = calculateCurrentLevelXp(dbTotalXp, dbLevel)
 
-        store.setQuestsFromDb(loadedQuests)
-        store.setReflectionsFromDb(loadedReflections)
-
-        // Update player profile with Supabase data
         store.setPlayerFromDb({
           name: userData.profile?.display_name || displayName,
-          level: userData.stats.level || 1,
-          xp: userData.stats.xp || 0,
-          totalXp: userData.stats.xp || 0,
+          level: dbLevel,
+          xp: currentLevelXp, // Display XP within current level
+          totalXp: dbTotalXp,
           streak: userData.stats.streak || 0,
           stats: userData.stats.stats || store.player.stats,
+          nextLevelXp: calculateNextLevelXp(dbLevel),
         })
 
-        // Load achievements from Supabase or use defaults
-        if (userData.stats.achievements && userData.stats.achievements.length > 0) {
-          usePlayerStore.setState({
-            achievements: userData.stats.achievements,
-          })
-        } else {
-          usePlayerStore.setState({
-            achievements: ACHIEVEMENTS,
-          })
+        // Load achievements from DB
+        if (userData.stats.achievements?.length > 0) {
+          usePlayerStore.setState({ achievements: userData.stats.achievements })
         }
 
-        console.log("[v0] Final userId in store:", usePlayerStore.getState().userId)
+        console.log("[v0] READ-ONLY hydration complete - DB values set directly")
       }
-
-      console.log("[v0] User data sync complete")
     } catch (error) {
-      console.error("[v0] Error syncing user data:", error)
+      console.error("[v0] Error in syncUserData:", error)
     }
   }
 

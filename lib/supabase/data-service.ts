@@ -1,5 +1,6 @@
 import { createClient } from "./client"
-import type { Quest, PersonalReflection, Achievement } from "@/lib/types"
+import type { Quest, PersonalReflection, Achievement, PlayerStats } from "@/lib/types"
+import { calculateStatGrowth, checkLevelUp, calculateCurrentLevelXp, calculateNextLevelXp } from "@/lib/rpg-engine"
 
 const supabase = createClient()
 
@@ -210,6 +211,189 @@ export async function deleteQuestFromDb(questId: string) {
   }
   console.log("[v0] Quest deleted successfully:", questId)
   return true
+}
+
+// DB-FIRST: Complete a quest and update all related stats in one transaction
+export async function completeQuestInDb(
+  userId: string,
+  questId: string,
+  currentStats: {
+    level: number
+    xp: number
+    totalXp: number
+    streak: number
+    stats: Record<string, number>
+    lastStreakDate: string
+  },
+  quest: Quest,
+): Promise<{
+  success: boolean
+  newStats?: {
+    level: number
+    xp: number
+    totalXp: number
+    streak: number
+    stats: Record<string, number>
+    nextLevelXp: number
+    rank: string
+    lastStreakDate: string
+  }
+}> {
+  console.log("[v0] completeQuestInDb - DB-FIRST mutation")
+
+  // Calculate new values BEFORE updating DB
+  const xpGained = quest.xp || 10
+  const newTotalXp = currentStats.totalXp + xpGained
+
+  // Check level up
+  const { didLevelUp, newLevel, newRank } = checkLevelUp(newTotalXp, currentStats.level)
+  const finalLevel = didLevelUp ? newLevel : currentStats.level
+  const finalRank = didLevelUp ? newRank : getRankForLevel(currentStats.level)
+
+  // Calculate XP within current level
+  const newCurrentLevelXp = calculateCurrentLevelXp(newTotalXp, finalLevel)
+  const nextLevelXp = calculateNextLevelXp(finalLevel)
+
+  // Calculate stat growth (returns DELTA only, not full stats)
+  const statGrowth = calculateStatGrowth(quest, currentStats.stats as PlayerStats)
+  const newStats = { ...currentStats.stats }
+  Object.entries(statGrowth).forEach(([stat, delta]) => {
+    if (typeof newStats[stat] === "number" && typeof delta === "number") {
+      newStats[stat] = newStats[stat] + delta
+    }
+  })
+
+  // Calculate streak
+  const today = new Date()
+  const todayStr = today.toISOString().split("T")[0]
+  let newStreak = currentStats.streak
+  let newLastStreakDate = currentStats.lastStreakDate
+
+  if (currentStats.lastStreakDate !== todayStr) {
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split("T")[0]
+
+    if (currentStats.lastStreakDate === yesterdayStr) {
+      newStreak = currentStats.streak + 1
+    } else {
+      newStreak = 1
+    }
+    newLastStreakDate = todayStr
+  }
+
+  // 1. Update quest as completed in DB
+  const { error: questError } = await supabase
+    .from("quests")
+    .update({
+      completed: true,
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", questId)
+
+  if (questError) {
+    console.error("[v0] DB error updating quest:", questError)
+    return { success: false }
+  }
+
+  // 2. Update player stats in DB
+  const { error: statsError } = await supabase
+    .from("player_stats")
+    .update({
+      level: finalLevel,
+      xp: newTotalXp, // Store total XP in DB
+      streak: newStreak,
+      stats: newStats,
+      last_activity_date: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+
+  if (statsError) {
+    console.error("[v0] DB error updating stats:", statsError)
+    // Rollback quest completion
+    await supabase.from("quests").update({ completed: false, completed_at: null }).eq("id", questId)
+    return { success: false }
+  }
+
+  console.log("[v0] DB-FIRST mutation SUCCESS - level:", finalLevel, "totalXp:", newTotalXp)
+
+  return {
+    success: true,
+    newStats: {
+      level: finalLevel,
+      xp: newCurrentLevelXp, // Return current level XP for display
+      totalXp: newTotalXp,
+      streak: newStreak,
+      stats: newStats,
+      nextLevelXp,
+      rank: finalRank,
+      lastStreakDate: newLastStreakDate,
+    },
+  }
+}
+
+function getRankForLevel(level: number): string {
+  if (level >= 100) return "S-Rank Hunter"
+  if (level >= 80) return "A-Rank Hunter"
+  if (level >= 60) return "B-Rank Hunter"
+  if (level >= 40) return "C-Rank Hunter"
+  if (level >= 20) return "D-Rank Hunter"
+  if (level >= 10) return "E-Rank Hunter"
+  return "Beginner"
+}
+
+// DB-FIRST: Add quests
+export async function addQuestsToDb(
+  userId: string,
+  quests: Omit<Quest, "id" | "completed" | "createdAt">[],
+): Promise<{ success: boolean; quests: Quest[] }> {
+  console.log("[v0] addQuestsToDb - DB-FIRST mutation")
+
+  const questsWithIds: Quest[] = quests.map((quest) => ({
+    ...quest,
+    id: generateUUID(),
+    completed: false,
+    createdAt: new Date(),
+    isOverdue: quest.dueDate ? new Date() > new Date(quest.dueDate) : false,
+  }))
+
+  const questData = questsWithIds.map((quest) => ({
+    id: quest.id,
+    user_id: userId,
+    title: quest.title,
+    description: quest.description || "",
+    xp_reward: quest.xp || 10,
+    type: mapQuestType(quest.type || "daily"),
+    difficulty: mapQuestDifficulty(quest.difficulty || "Easy"),
+    realm: mapQuestRealm(quest.realm || "Mind & Skill"),
+    completed: false,
+    due_date: quest.dueDate ? new Date(quest.dueDate).toISOString() : null,
+    recurring: quest.recurring || false,
+    stat_boosts: quest.statBoosts || {},
+    created_at: new Date().toISOString(),
+  }))
+
+  const { data, error } = await supabase.from("quests").insert(questData).select()
+
+  if (error) {
+    console.error("[v0] DB error adding quests:", error)
+    return { success: false, quests: [] }
+  }
+
+  console.log("[v0] addQuestsToDb SUCCESS - added", data?.length, "quests")
+  return { success: true, quests: questsWithIds }
+}
+
+function generateUUID(): string {
+  if (typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID()
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === "x" ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
 
 // Reflection functions
