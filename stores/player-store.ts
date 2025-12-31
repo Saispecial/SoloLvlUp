@@ -146,9 +146,16 @@ export const usePlayerStore = create<PlayerStore>()(
 
       setQuestsFromDb: (quests: Quest[]) => {
         console.log("[v0] setQuestsFromDb called, count:", quests.length)
+        console.log(
+          "[v0] setQuestsFromDb quests:",
+          quests.map((q) => ({ id: q.id, title: q.title, completed: q.completed })),
+        )
         const activeQuests = quests.filter((q) => !q.completed)
         const completedQuests = quests.filter((q) => q.completed)
         set({ quests: activeQuests, completedQuests })
+        setTimeout(() => {
+          set({ quests: activeQuests, completedQuests })
+        }, 0)
       },
 
       setReflectionsFromDb: (reflections: PersonalReflection[]) => {

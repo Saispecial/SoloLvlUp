@@ -71,53 +71,53 @@ export function calculateRank(level: number): string {
   return "E"
 }
 
-export function calculateStatGrowth(quest: Quest, currentStats: PlayerStats): PlayerStats {
-  const newStats = { ...currentStats }
+export function calculateStatGrowth(quest: Quest, currentStats: PlayerStats): Partial<PlayerStats> {
+  const statDeltas: Partial<PlayerStats> = {}
   const growthAmount = Math.floor(quest.xp / 10) || 1
 
   switch (quest.realm) {
     case "Mind & Skill":
       if (Math.random() > 0.5) {
-        newStats.IQ += growthAmount
+        statDeltas.IQ = growthAmount
       } else {
-        newStats["Technical Attribute"] += growthAmount
+        statDeltas["Technical Attribute"] = growthAmount
       }
       if (quest.difficulty === "Hard" || quest.difficulty === "Life Achievement") {
-        newStats["Problem Solving"] += growthAmount
+        statDeltas["Problem Solving"] = (statDeltas["Problem Solving"] || 0) + growthAmount
       }
       break
 
     case "Emotional & Spiritual":
-      newStats.EQ += growthAmount
+      statDeltas.EQ = growthAmount
       if (quest.difficulty === "Hard" || quest.difficulty === "Life Achievement") {
-        newStats.Aptitude += Math.floor(growthAmount / 2)
+        statDeltas.Aptitude = Math.floor(growthAmount / 2)
       }
       break
 
     case "Body & Discipline":
-      newStats.Strength += growthAmount
+      statDeltas.Strength = growthAmount
       if (quest.difficulty === "Hard" || quest.difficulty === "Life Achievement") {
-        newStats["Problem Solving"] += Math.floor(growthAmount / 2)
+        statDeltas["Problem Solving"] = Math.floor(growthAmount / 2)
       }
       break
 
     case "Creation & Mission":
-      newStats.Aptitude += growthAmount
+      statDeltas.Aptitude = growthAmount
       if (quest.difficulty === "Hard" || quest.difficulty === "Life Achievement") {
-        newStats["Technical Attribute"] += Math.floor(growthAmount / 2)
+        statDeltas["Technical Attribute"] = Math.floor(growthAmount / 2)
       }
       break
 
     case "Heart & Loyalty":
       if (Math.random() > 0.5) {
-        newStats.EQ += growthAmount
+        statDeltas.EQ = growthAmount
       } else {
-        newStats.Strength += growthAmount
+        statDeltas.Strength = growthAmount
       }
       break
   }
 
-  return newStats
+  return statDeltas
 }
 
 export function calculateStatBreakthrough(statValue: number): StatBreakthrough {

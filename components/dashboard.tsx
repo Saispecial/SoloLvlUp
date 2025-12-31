@@ -149,7 +149,6 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
   }
 
   const activeQuests = quests.filter((q) => !q.completed)
-  console.log("[Dashboard] Current quests:", quests)
 
   const handleReflectionSubmit = (e: React.FormEvent) => {
     e.preventDefault()

@@ -126,16 +126,17 @@ function mapQuestType(type: string): string {
 }
 
 function mapQuestRealm(realm: string): string {
+  // AI-generated realm names → App realm names
   const realmMap: Record<string, string> = {
-    "Physical Vitality": "Physical Vitality",
+    "Physical Vitality": "Body & Discipline",
+    "Spiritual Growth": "Emotional & Spiritual",
+    "Social & Emotional": "Heart & Loyalty",
     "Mind & Skill": "Mind & Skill",
-    "Social & Emotional": "Social & Emotional",
-    "Spiritual Growth": "Spiritual Growth",
-    // Map app realms to database realms
-    "Body & Discipline": "Physical Vitality",
-    "Emotional & Spiritual": "Spiritual Growth",
-    "Creation & Mission": "Mind & Skill",
-    "Heart & Loyalty": "Social & Emotional",
+    // Keep app realm names unchanged
+    "Body & Discipline": "Body & Discipline",
+    "Emotional & Spiritual": "Emotional & Spiritual",
+    "Creation & Mission": "Creation & Mission",
+    "Heart & Loyalty": "Heart & Loyalty",
   }
   return realmMap[realm] || "Mind & Skill"
 }
