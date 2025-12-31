@@ -509,6 +509,52 @@ export const usePlayerStore = create<PlayerStore>()(
       getMonthlyProgress: () => {
         return get().detailedTracking.performanceMetrics.monthlyProgress
       },
+
+      getReflections: () => {
+        return get().reflections
+      },
+
+      getDiaryEntries: () => {
+        return get().diaryEntries
+      },
+
+      updateStreak: () => {
+        const { player } = get()
+        const today = new Date().toDateString()
+
+        if (player.lastStreakDate === today) {
+          return // Already updated today
+        }
+
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        const yesterdayStr = yesterday.toDateString()
+
+        let newStreak = 1
+        if (player.lastStreakDate === yesterdayStr) {
+          newStreak = player.streak + 1
+        }
+
+        set((state) => ({
+          player: {
+            ...state.player,
+            streak: newStreak,
+            lastStreakDate: today,
+          },
+        }))
+      },
+
+      updatePlayerName: (name: string) => {
+        set((state) => ({
+          player: { ...state.player, name },
+        }))
+      },
+
+      updateTheme: (theme: Theme) => {
+        set((state) => ({
+          player: { ...state.player, theme },
+        }))
+      },
     }),
     {
       name: "rpg-player-storage",
