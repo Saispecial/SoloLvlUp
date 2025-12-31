@@ -10,8 +10,16 @@ import type {
   MoodTrend,
   PerformanceMetrics,
   DiaryEntry,
+  PlayerStats,
 } from "@/lib/types"
-import { createInitialPlayer, checkLevelUp, calculateStatGrowth, calculateNextLevelXp } from "@/lib/rpg-engine"
+import {
+  createInitialPlayer,
+  checkLevelUp,
+  calculateStatGrowth,
+  calculateNextLevelXp,
+  calculateCurrentLevelXp,
+  calculateStatBreakthrough,
+} from "@/lib/rpg-engine"
 import { ACHIEVEMENTS, checkAchievements } from "@/lib/achievements"
 import {
   saveQuest,
@@ -118,6 +126,9 @@ export const usePlayerStore = create<PlayerStore>()(
         customAttributes: {},
         name: "Hunter",
         theme: "classic-dark",
+        rank: "Beginner",
+        lastStreakDate: "",
+        statBreakthroughs: {} as Record<keyof PlayerStats, ReturnType<typeof calculateStatBreakthrough>>,
       },
       quests: [],
       completedQuests: [],
@@ -162,7 +173,8 @@ export const usePlayerStore = create<PlayerStore>()(
 
         await savePlayerStats(userId, {
           level: player.level,
-          xp: player.totalXp,
+          xp: player.xp,
+          totalXp: player.totalXp,
           streak: player.streak,
           stats: player.stats,
           achievements: achievements,
@@ -179,15 +191,26 @@ export const usePlayerStore = create<PlayerStore>()(
 
         const xpGained = quest.xp
         const newTotalXp = player.totalXp + xpGained
-        const { didLevelUp, newLevel } = checkLevelUp(newTotalXp, player.level)
+
+        // Check if leveled up
+        const { didLevelUp, newLevel, newRank } = checkLevelUp(newTotalXp, player.level)
+        const finalLevel = didLevelUp ? newLevel : player.level
+
+        // Calculate XP within current level
+        const newCurrentLevelXp = calculateCurrentLevelXp(newTotalXp, finalLevel)
+        const nextLevelXp = calculateNextLevelXp(finalLevel)
 
         const statGrowth = calculateStatGrowth(quest, player.stats)
         const newStats = { ...player.stats }
-        Object.entries(statGrowth).forEach(([stat, growth]) => {
-          if (typeof newStats[stat] === "number") {
-            newStats[stat] = Math.min(100, newStats[stat] + growth)
+        Object.entries(statGrowth).forEach(([stat, value]) => {
+          if (typeof newStats[stat as keyof PlayerStats] === "number") {
+            newStats[stat as keyof PlayerStats] = (newStats[stat as keyof PlayerStats] as number) + (value as number)
           }
         })
+
+        const newStatBreakthroughs = Object.fromEntries(
+          Object.entries(newStats).map(([stat, value]) => [stat, calculateStatBreakthrough(value as number)]),
+        ) as Record<keyof PlayerStats, ReturnType<typeof calculateStatBreakthrough>>
 
         const completedQuest = {
           ...quest,
@@ -211,10 +234,13 @@ export const usePlayerStore = create<PlayerStore>()(
           completedQuests: [...completedQuests, completedQuest],
           player: {
             ...player,
+            xp: newCurrentLevelXp,
             totalXp: newTotalXp,
-            level: didLevelUp ? newLevel : player.level,
+            level: finalLevel,
+            rank: didLevelUp ? newRank : player.rank,
             stats: newStats,
-            xpToNextLevel: calculateNextLevelXp(didLevelUp ? newLevel : player.level),
+            statBreakthroughs: newStatBreakthroughs,
+            nextLevelXp: nextLevelXp,
           },
           achievements: updatedAchievements,
         })
@@ -255,7 +281,6 @@ export const usePlayerStore = create<PlayerStore>()(
           quests: [...state.quests, ...questsWithIds],
         }))
 
-        // Get userId again after state update in case it changed
         const currentUserId = get().userId
         console.log("[v0] UserId after state update:", currentUserId)
 
@@ -320,6 +345,9 @@ export const usePlayerStore = create<PlayerStore>()(
             customAttributes: {},
             name: "Hunter",
             theme: "classic-dark",
+            rank: "Beginner",
+            lastStreakDate: "",
+            statBreakthroughs: {} as Record<keyof PlayerStats, ReturnType<typeof calculateStatBreakthrough>>,
           },
           quests: [],
           completedQuests: [],
@@ -400,49 +428,58 @@ export const usePlayerStore = create<PlayerStore>()(
 
       updateStreak: async () => {
         const { completedQuests, player, userId } = get()
+
         const today = new Date()
-        today.setHours(0, 0, 0, 0)
+        const todayStr = today.toISOString().split("T")[0]
+
+        if (player.lastStreakDate === todayStr) {
+          console.log("[v0] Streak already updated today, skipping")
+          return
+        }
 
         const yesterday = new Date(today)
         yesterday.setDate(yesterday.getDate() - 1)
+        const yesterdayStr = yesterday.toISOString().split("T")[0]
 
         const hasCompletedToday = completedQuests.some((quest) => {
           if (!quest.completedAt) return false
-          const questDate = new Date(quest.completedAt)
-          questDate.setHours(0, 0, 0, 0)
-          return questDate.getTime() === today.getTime()
+          const questDateStr = new Date(quest.completedAt).toISOString().split("T")[0]
+          return questDateStr === todayStr
         })
+
+        if (!hasCompletedToday) {
+          console.log("[v0] No quest completed today, streak not updated")
+          return
+        }
 
         const hasCompletedYesterday = completedQuests.some((quest) => {
           if (!quest.completedAt) return false
-          const questDate = new Date(quest.completedAt)
-          questDate.setHours(0, 0, 0, 0)
-          return questDate.getTime() === yesterday.getTime()
+          const questDateStr = new Date(quest.completedAt).toISOString().split("T")[0]
+          return questDateStr === yesterdayStr
         })
 
-        let newStreak = player.streak
+        const streakWasMaintained = player.lastStreakDate === yesterdayStr
 
-        if (hasCompletedToday) {
-          if (player.streak === 0 || hasCompletedYesterday) {
-            newStreak = player.streak + 1
-          }
-        } else if (!hasCompletedYesterday) {
-          newStreak = 0
+        let newStreak: number
+
+        if (hasCompletedYesterday || streakWasMaintained) {
+          newStreak = player.streak + 1
+          console.log("[v0] Streak continued! New streak:", newStreak)
+        } else {
+          newStreak = 1
+          console.log("[v0] New streak started! Streak:", newStreak)
         }
 
-        if (newStreak !== player.streak) {
-          console.log("[v0] Updating streak from", player.streak, "to", newStreak)
-          set((state) => ({
-            player: {
-              ...state.player,
-              streak: newStreak,
-            },
-          }))
+        set((state) => ({
+          player: {
+            ...state.player,
+            streak: newStreak,
+            lastStreakDate: todayStr,
+          },
+        }))
 
-          // Sync streak to Supabase
-          if (userId) {
-            await get().syncToSupabase()
-          }
+        if (userId) {
+          await get().syncToSupabase()
         }
       },
 
@@ -564,7 +601,6 @@ export const usePlayerStore = create<PlayerStore>()(
         diaryEntries: state.diaryEntries,
         achievements: state.achievements,
         detailedTracking: state.detailedTracking,
-        // userId is NOT persisted - it comes from auth
       }),
     },
   ),

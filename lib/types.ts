@@ -7,14 +7,22 @@ export interface PlayerStats {
   "Problem Solving": number
 }
 
+export interface StatBreakthrough {
+  tier: number // 0 = base (0-100), 1 = bronze (100-200), 2 = silver (200-300), etc.
+  displayValue: number // actual value in current tier (0-100)
+  totalValue: number // total accumulated value
+}
+
 export interface PlayerProfile {
   level: number
   rank: "E" | "D" | "C" | "B" | "A" | "S" | "S+"
   xp: number
   totalXp: number
   stats: PlayerStats
+  statBreakthroughs?: Record<keyof PlayerStats, StatBreakthrough>
   nextLevelXp: number
   streak: number
+  lastStreakDate?: string
   skillPoints: number
   customAttributes: Record<string, number>
   name: string
@@ -75,7 +83,17 @@ export interface Achievement {
   unlocked: boolean
   unlockedAt?: Date
   requirement: {
-    type: "level" | "quests_completed" | "streak" | "stat_threshold" | "total_xp" | "reflection_streak" | "perfect_week" | "realm_master" | "speed_runner" | "consistency_king"
+    type:
+      | "level"
+      | "quests_completed"
+      | "streak"
+      | "stat_threshold"
+      | "total_xp"
+      | "reflection_streak"
+      | "perfect_week"
+      | "realm_master"
+      | "speed_runner"
+      | "consistency_king"
     value: number
     stat?: keyof PlayerStats
     realm?: Realm
@@ -127,11 +145,14 @@ export interface PerformanceMetrics {
     achievementsUnlocked: number
     statGrowth: Partial<PlayerStats>
   }
-  realmPerformance: Record<Realm, {
-    questsCompleted: number
-    xpEarned: number
-    averageDifficulty: string
-  }>
+  realmPerformance: Record<
+    Realm,
+    {
+      questsCompleted: number
+      xpEarned: number
+      averageDifficulty: string
+    }
+  >
 }
 
 export interface DetailedTracking {

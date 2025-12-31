@@ -413,7 +413,11 @@ const Dashboard = forwardRef(function Dashboard(props, ref) {
             animate={{ opacity: 1, y: 0 }}
             className={`${isMobile ? "pb-24 px-4 pt-20 md:pt-0" : ""}`}
           >
-            <StatsPanel stats={player.stats} customAttributes={player.customAttributes} />
+            <StatsPanel
+              stats={player.stats}
+              statBreakthroughs={player.statBreakthroughs}
+              customAttributes={player.customAttributes}
+            />
           </motion.div>
         )
 
