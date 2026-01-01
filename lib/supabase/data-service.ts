@@ -416,7 +416,7 @@ export async function getReflections(userId: string) {
     mood: r.mood?.toString() || "",
     emotionalState: r.content || "",
     currentChallenges: r.challenges || "",
-    motivationLevel: r.motivation_level?.toString() || "5",
+    motivationLevel: r.motivation_level?.toString() || r.motivation?.toString() || "5",
     gratitude: r.gratitude || "",
     timestamp: new Date(r.created_at),
   }))
