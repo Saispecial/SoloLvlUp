@@ -132,7 +132,14 @@ export const usePlayerStore = create<PlayerStore>()(
 
       setUserId: (userId: string | null) => {
         console.log("[v0] setUserId - auth only, no RPG sync:", userId)
-        set({ userId })
+
+        const currentUserId = get().userId
+        if (userId && currentUserId && userId !== currentUserId) {
+          console.log("[v0] User switched, resetting name to default")
+          set({ userId, player: { ...get().player, name: "Hunter" } })
+        } else {
+          set({ userId })
+        }
       },
 
       setQuestsFromDb: (quests: Quest[]) => {

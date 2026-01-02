@@ -119,14 +119,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 function onLoginSuccess(userId: string, displayName: string) {
   console.log("[v0] onLoginSuccess - AUTH-ONLY mode")
+  console.log("[v0] Setting username for user:", userId, "name:", displayName)
 
   const store = usePlayerStore.getState()
 
   store.setUserId(userId)
-
-  if (store.player.name === "Hunter" && displayName !== "Hunter") {
-    store.updatePlayerName(displayName)
-  }
+  store.updatePlayerName(displayName)
 
   console.log("[v0] Auth identity set, RPG state preserved")
 }
