@@ -65,6 +65,18 @@ export default function SignUpPage() {
         throw signUpError
       }
 
+      if (data?.user) {
+        const { error: profileError } = await supabase.from("profiles").upsert({
+          id: data.user.id,
+          display_name: displayName,
+          updated_at: new Date().toISOString(),
+        })
+
+        if (profileError) {
+          console.error("[v0] Failed to save profile:", profileError)
+        }
+      }
+
       if (data?.session) {
         router.push("/")
         return

@@ -25,33 +25,88 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const supabase = createClient()
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
+    const initAuth = async () => {
+      try {
+        // Set a timeout to prevent infinite loading
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Auth timeout")), 5000))
 
-      if (currentUser) {
-        onLoginSuccess(currentUser.id, currentUser.user_metadata?.display_name || "Hunter")
+        const sessionPromise = supabase.auth.getSession()
+
+        const {
+          data: { session },
+        } = (await Promise.race([sessionPromise, timeoutPromise])) as any
+
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+
+        if (currentUser) {
+          console.log("[v0] User authenticated:", currentUser.id)
+
+          // Try to fetch display name but don't block on it
+          try {
+            const profilePromise = supabase.from("profiles").select("display_name").eq("id", currentUser.id).single()
+
+            const profileTimeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Profile fetch timeout")), 2000),
+            )
+
+            const { data: profileData } = (await Promise.race([profilePromise, profileTimeout])) as any
+
+            const displayName = profileData?.display_name || currentUser.user_metadata?.display_name || "Hunter"
+            onLoginSuccess(currentUser.id, displayName)
+          } catch (profileError) {
+            console.log("[v0] Profile fetch failed, using default:", profileError)
+            // Still proceed with login using metadata or default name
+            onLoginSuccess(currentUser.id, currentUser.user_metadata?.display_name || "Hunter")
+          }
+        }
+      } catch (error) {
+        console.log("[v0] Auth initialization failed:", error)
+        // Proceed without auth - user can still use app in guest mode
+      } finally {
+        setLoading(false)
+        setIsInitialized(true)
       }
+    }
 
-      setLoading(false)
-      setIsInitialized(true)
-    })
+    initAuth()
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
+      console.log("[v0] Auth state changed:", event)
 
-      if (event === "SIGNED_IN" && currentUser) {
-        onLoginSuccess(currentUser.id, currentUser.user_metadata?.display_name || "Hunter")
-      } else if (event === "SIGNED_OUT") {
-        usePlayerStore.getState().setUserId(null)
+      try {
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+
+        if (event === "SIGNED_IN" && currentUser) {
+          // Try to get display name, but don't block on it
+          const displayName = currentUser.user_metadata?.display_name || "Hunter"
+          onLoginSuccess(currentUser.id, displayName)
+
+          // Attempt async profile fetch without blocking
+          supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("id", currentUser.id)
+            .single()
+            .then(({ data }) => {
+              if (data?.display_name && data.display_name !== displayName) {
+                usePlayerStore.getState().updatePlayerName(data.display_name)
+              }
+            })
+            .catch(() => {
+              console.log("[v0] Profile fetch in background failed")
+            })
+        } else if (event === "SIGNED_OUT") {
+          usePlayerStore.getState().setUserId(null)
+        }
+      } catch (error) {
+        console.log("[v0] Auth state change error:", error)
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     })
 
     return () => {
