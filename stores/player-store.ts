@@ -12,24 +12,20 @@ import type {
   DiaryEntry,
   PlayerStats,
 } from "@/lib/types"
-import { createInitialPlayer, calculateNextLevelXp, calculateStatBreakthrough } from "@/lib/rpg-engine"
-import { ACHIEVEMENTS, checkAchievements } from "@/lib/achievements"
 import {
-  deleteQuestFromDb,
-  saveReflection,
-  savePlayerStats,
-  resetUserData,
-  completeQuestInDb,
-  addQuestsToDb,
-  saveQuest, // Declared the missing variable here
-} from "@/lib/supabase/data-service"
+  createInitialPlayer,
+  calculateNextLevelXp,
+  calculateStatBreakthrough,
+  calculateStatGrowth,
+  checkLevelUp,
+  calculateCurrentLevelXp,
+} from "@/lib/rpg-engine"
+import { ACHIEVEMENTS, checkAchievements } from "@/lib/achievements"
 
 const generateUUID = (): string => {
-  // Use global crypto available in modern browsers
   if (typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID()
   }
-  // Fallback for environments without crypto.randomUUID
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0
     const v = c === "x" ? r : (r & 0x3) | 0x8
@@ -135,93 +131,78 @@ export const usePlayerStore = create<PlayerStore>()(
       userId: null,
 
       setUserId: (userId: string | null) => {
-        console.log("[v0] setUserId called:", userId)
+        console.log("[v0] setUserId - auth only, no RPG sync:", userId)
         set({ userId })
       },
 
       setQuestsFromDb: (quests: Quest[]) => {
-        console.log("[v0] setQuestsFromDb called, count:", quests.length)
-        console.log(
-          "[v0] setQuestsFromDb quests:",
-          quests.map((q) => ({ id: q.id, title: q.title, completed: q.completed })),
-        )
-        const activeQuests = quests.filter((q) => !q.completed)
-        const completedQuests = quests.filter((q) => q.completed)
-        set({ quests: activeQuests, completedQuests })
-        setTimeout(() => {
-          set({ quests: activeQuests, completedQuests })
-        }, 0)
+        console.log("[v0] setQuestsFromDb - DISABLED (local-only mode)")
+        // Do NOT overwrite local quests with DB data
       },
 
       setReflectionsFromDb: (reflections: PersonalReflection[]) => {
-        console.log("[v0] setReflectionsFromDb called, count:", reflections.length)
-        set({ reflections, currentReflection: reflections[0] || null })
+        console.log("[v0] setReflectionsFromDb - DISABLED (local-only mode)")
+        // Do NOT overwrite local reflections with DB data
       },
 
       setPlayerFromDb: (playerData: Partial<PlayerProfile>) => {
-        console.log("[v0] setPlayerFromDb - READ-ONLY hydration, no recalculations")
-        set((state) => ({
-          player: {
-            ...state.player,
-            ...playerData,
-            // Calculate display values from DB data
-            nextLevelXp: calculateNextLevelXp(playerData.level || state.player.level),
-          },
-        }))
+        console.log("[v0] setPlayerFromDb - DISABLED (local-only mode)")
+        // Do NOT overwrite local player data with DB data
       },
 
       syncToSupabase: async () => {
-        const { userId, player, achievements } = get()
-        console.log("[v0] syncToSupabase called, userId:", userId)
-        if (!userId) {
-          console.warn("[v0] syncToSupabase: No userId, skipping")
-          return
-        }
-
-        await savePlayerStats(userId, {
-          level: player.level,
-          xp: player.xp,
-          totalXp: player.totalXp,
-          streak: player.streak,
-          stats: player.stats,
-          achievements: achievements,
-        })
+        console.log("[v0] syncToSupabase - DISABLED (local-only mode)")
+        // No-op - RPG state is local-only
       },
 
-      completeQuest: async (questId: string) => {
-        const { quests, player, completedQuests, achievements, userId } = get()
+      completeQuest: (questId: string) => {
+        const { quests, player, completedQuests, achievements } = get()
         const quest = quests.find((q) => q.id === questId)
 
         if (!quest || quest.completed) return
 
-        console.log("[v0] completeQuest - DB-FIRST approach")
+        console.log("[v0] completeQuest - LOCAL-ONLY mode")
 
-        if (!userId) {
-          console.error("[v0] No userId - cannot complete quest")
-          return
+        // Calculate XP gain
+        const xpGained = quest.xp || 10
+        const newTotalXp = player.totalXp + xpGained
+
+        // Check level up
+        const { didLevelUp, newLevel, newRank } = checkLevelUp(newTotalXp, player.level)
+        const finalLevel = didLevelUp ? newLevel : player.level
+        const finalRank = didLevelUp ? newRank : player.rank
+
+        // Calculate XP within current level
+        const newCurrentLevelXp = calculateCurrentLevelXp(newTotalXp, finalLevel)
+        const nextLevelXp = calculateNextLevelXp(finalLevel)
+
+        // Calculate stat growth (DELTA only)
+        const statGrowth = calculateStatGrowth(quest, player.stats)
+        const newStats = { ...player.stats }
+        Object.entries(statGrowth).forEach(([stat, delta]) => {
+          if (typeof newStats[stat as keyof PlayerStats] === "number" && typeof delta === "number") {
+            ;(newStats as Record<string, number>)[stat] = (newStats as Record<string, number>)[stat] + delta
+          }
+        })
+
+        // Calculate streak - only update once per day
+        const today = new Date().toDateString()
+        let newStreak = player.streak
+        let newLastStreakDate = player.lastStreakDate
+
+        if (player.lastStreakDate !== today) {
+          const yesterday = new Date()
+          yesterday.setDate(yesterday.getDate() - 1)
+          const yesterdayStr = yesterday.toDateString()
+
+          if (player.lastStreakDate === yesterdayStr) {
+            newStreak = player.streak + 1
+          } else {
+            newStreak = 1
+          }
+          newLastStreakDate = today
         }
 
-        // DB-FIRST: Update database first
-        const result = await completeQuestInDb(
-          userId,
-          questId,
-          {
-            level: player.level,
-            xp: player.xp,
-            totalXp: player.totalXp,
-            streak: player.streak,
-            stats: player.stats as Record<string, number>,
-            lastStreakDate: player.lastStreakDate || "",
-          },
-          quest,
-        )
-
-        if (!result.success || !result.newStats) {
-          console.error("[v0] DB update failed - UI NOT updated")
-          return // Do NOT update UI if DB fails
-        }
-
-        // DB succeeded - now update UI to mirror DB
         const completedQuest = {
           ...quest,
           completed: true,
@@ -229,111 +210,86 @@ export const usePlayerStore = create<PlayerStore>()(
         }
 
         const newStatBreakthroughs = Object.fromEntries(
-          Object.entries(result.newStats.stats).map(([stat, value]) => [
-            stat,
-            calculateStatBreakthrough(value as number),
-          ]),
+          Object.entries(newStats).map(([stat, value]) => [stat, calculateStatBreakthrough(value as number)]),
         ) as Record<keyof PlayerStats, ReturnType<typeof calculateStatBreakthrough>>
 
         const updatedAchievements = checkAchievements(
           {
             ...player,
-            totalXp: result.newStats.totalXp,
-            level: result.newStats.level,
-            stats: result.newStats.stats as PlayerStats,
+            totalXp: newTotalXp,
+            level: finalLevel,
+            stats: newStats as PlayerStats,
           },
           [...completedQuests, completedQuest],
           achievements,
         )
 
-        // Update UI to mirror DB result
+        // Update local state only - no DB
         set({
           quests: quests.filter((q) => q.id !== questId),
           completedQuests: [...completedQuests, completedQuest],
           player: {
             ...player,
-            xp: result.newStats.xp,
-            totalXp: result.newStats.totalXp,
-            level: result.newStats.level,
-            rank: result.newStats.rank,
-            streak: result.newStats.streak,
-            lastStreakDate: result.newStats.lastStreakDate,
-            stats: result.newStats.stats as PlayerStats,
+            xp: newCurrentLevelXp,
+            totalXp: newTotalXp,
+            level: finalLevel,
+            rank: finalRank,
+            streak: newStreak,
+            lastStreakDate: newLastStreakDate,
+            stats: newStats as PlayerStats,
             statBreakthroughs: newStatBreakthroughs,
-            nextLevelXp: result.newStats.nextLevelXp,
+            nextLevelXp: nextLevelXp,
           },
           achievements: updatedAchievements,
         })
 
-        console.log("[v0] UI updated to mirror DB")
+        console.log("[v0] Quest completed locally - level:", finalLevel, "totalXp:", newTotalXp)
         get().updateDetailedTracking()
       },
 
-      addQuests: async (newQuests) => {
-        const userId = get().userId
-        console.log("[v0] addQuests - DB-FIRST approach, userId:", userId)
-
-        if (!userId) {
-          console.error("[v0] No userId - cannot add quests")
-          return
-        }
+      addQuests: (newQuests) => {
+        console.log("[v0] addQuests - LOCAL-ONLY mode")
 
         if (newQuests.length === 0) {
           console.warn("[v0] No quests to add")
           return
         }
 
-        // DB-FIRST: Insert into database first
-        const result = await addQuestsToDb(userId, newQuests)
-
-        if (!result.success) {
-          console.error("[v0] DB insert failed - UI NOT updated")
-          return // Do NOT update UI if DB fails
-        }
-
-        // DB succeeded - now update UI to mirror DB
-        set((state) => ({
-          quests: [...state.quests, ...result.quests],
+        const questsWithIds: Quest[] = newQuests.map((quest) => ({
+          ...quest,
+          id: generateUUID(),
+          completed: false,
+          createdAt: new Date(),
+          isOverdue: quest.dueDate ? new Date() > new Date(quest.dueDate) : false,
         }))
 
-        console.log("[v0] UI updated with", result.quests.length, "quests from DB")
+        set((state) => ({
+          quests: [...state.quests, ...questsWithIds],
+        }))
+
+        console.log("[v0] Added", questsWithIds.length, "quests locally")
       },
 
-      deleteQuest: async (questId: string) => {
-        const { userId } = get()
-        console.log("[v0] deleteQuest called, questId:", questId, "userId:", userId)
-
+      deleteQuest: (questId: string) => {
+        console.log("[v0] deleteQuest - LOCAL-ONLY mode, questId:", questId)
         set((state) => ({
           quests: state.quests.filter((q) => q.id !== questId),
         }))
-
-        if (userId) {
-          await deleteQuestFromDb(questId)
-        }
       },
 
-      editQuest: async (questId: string, updates: Partial<Quest>) => {
-        const { userId, quests } = get()
-        console.log("[v0] editQuest called, questId:", questId, "userId:", userId)
-
+      editQuest: (questId: string, updates: Partial<Quest>) => {
+        console.log("[v0] editQuest - LOCAL-ONLY mode, questId:", questId)
         set((state) => ({
           quests: state.quests.map((q) => (q.id === questId ? { ...q, ...updates } : q)),
         }))
-
-        if (userId) {
-          const updatedQuest = quests.find((q) => q.id === questId)
-          if (updatedQuest) {
-            await saveQuest(userId, { ...updatedQuest, ...updates } as Quest)
-          }
-        }
       },
 
-      resetPlayer: async () => {
-        const { userId } = get()
-        console.log("[v0] resetPlayer called, userId:", userId)
+      resetPlayer: () => {
+        console.log("[v0] resetPlayer - LOCAL-ONLY mode")
 
-        if (userId) {
-          await resetUserData(userId)
+        // Clear localStorage directly
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("rpg-player-storage")
         }
 
         set({
@@ -364,9 +320,8 @@ export const usePlayerStore = create<PlayerStore>()(
         }))
       },
 
-      setReflection: async (reflection) => {
-        const { userId } = get()
-        console.log("[v0] setReflection called, userId:", userId)
+      setReflection: (reflection) => {
+        console.log("[v0] setReflection - LOCAL-ONLY mode")
 
         const fullReflection: PersonalReflection = {
           ...reflection,
@@ -377,15 +332,6 @@ export const usePlayerStore = create<PlayerStore>()(
           currentReflection: fullReflection,
           reflections: [fullReflection, ...state.reflections],
         }))
-
-        if (userId) {
-          console.log("[v0] Saving reflection to Supabase...")
-          const saved = await saveReflection(userId, fullReflection)
-          console.log("[v0] Reflection save result:", saved ? "SUCCESS" : "FAILED")
-          await get().syncToSupabase()
-        } else {
-          console.error("[v0] NO USER ID - Reflection will NOT be saved to Supabase!")
-        }
       },
 
       addDiaryEntry: async (content: string) => {
