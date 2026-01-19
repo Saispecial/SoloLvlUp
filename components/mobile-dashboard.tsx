@@ -7,6 +7,7 @@ import { Trophy, Zap, Target, Award, CheckCircle2, Flame, TrendingUp } from "luc
 import type { PlayerProfile, Quest, Achievement } from "@/lib/types"
 import { ResponsiveCard } from "./responsive-card"
 import { AnimatedCounter } from "./animated-counter"
+import { usePlayerStore } from "@/stores/player-store"
 
 interface MobileDashboardProps {
   player: PlayerProfile
@@ -15,8 +16,8 @@ interface MobileDashboardProps {
 }
 
 export function MobileDashboard({ player, quests, achievements }: MobileDashboardProps) {
-  const completedQuests = quests.filter((q) => q.completed)
-  const activeQuests = quests.filter((q) => !q.completed)
+  const { completedQuests } = usePlayerStore()
+  const activeQuests = quests
   const unlockedAchievements = achievements.filter((a) => a.unlocked)
 
   const todayCompleted = completedQuests.filter(

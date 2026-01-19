@@ -10,6 +10,7 @@ import { Card3D } from "./3d-card"
 import { AnimatedCounter } from "./animated-counter"
 import { HolographicDisplay } from "./holographic-display"
 import { FuturisticProgressBar } from "./futuristic-progress-bar"
+import { usePlayerStore } from "@/stores/player-store"
 
 interface EnhancedDashboardProps {
   player: PlayerProfile
@@ -42,9 +43,13 @@ export function EnhancedDashboard({ player, quests, achievements }: EnhancedDash
     return <MobileDashboard player={player} quests={quests} achievements={achievements} />
   }
 
-  // Desktop dashboard (existing enhanced dashboard)
-  const completedQuests = quests.filter((q) => q.completed)
-  const activeQuests = quests.filter((q) => !q.completed)
+  // Desktop dashboard - now we can safely use hooks
+  return <EnhancedDashboardDesktop player={player} quests={quests} achievements={achievements} />
+}
+
+function EnhancedDashboardDesktop({ player, quests, achievements }: EnhancedDashboardProps) {
+  const { completedQuests } = usePlayerStore()
+  const activeQuests = quests
   const unlockedAchievements = achievements.filter((a) => a.unlocked)
 
   const containerVariants = {

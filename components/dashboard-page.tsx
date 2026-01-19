@@ -4,6 +4,7 @@ import type React from "react"
 import { motion } from "framer-motion"
 import { Trophy, Zap, Star, Target, Award, CheckCircle2, Flame } from "lucide-react"
 import type { PlayerProfile, Quest, Achievement } from "@/lib/types"
+import { usePlayerStore } from "@/stores/player-store"
 
 interface DashboardPageProps {
   player: PlayerProfile
@@ -12,8 +13,8 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ player, quests, achievements }: DashboardPageProps) {
-  const completedQuests = quests.filter((q) => q.completed)
-  const activeQuests = quests.filter((q) => !q.completed)
+  const { completedQuests } = usePlayerStore()
+  const activeQuests = quests
   const unlockedAchievements = achievements.filter((a) => a.unlocked)
 
   const containerVariants = {
