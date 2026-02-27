@@ -1,0 +1,28 @@
+{
+  "resources": {
+    "android": {
+      "icon": {
+        "sources": ["resources/android/icon/**/*.png"],
+        "sizes": [
+          { "width": 36, "height": 36, "density": "ldpi" },
+          { "width": 48, "height": 48, "density": "mdpi" },
+          { "width": 72, "height": 72, "density": "hdpi" },
+          { "width": 96, "height": 96, "density": "xhdpi" },
+          { "width": 144, "height": 144, "density": "xxhdpi" },
+          { "width": 192, "height": 192, "density": "xxxhdpi" }
+        ]
+      },
+      "splash": {
+        "sources": ["resources/android/splash/**/*.png"],
+        "sizes": [
+          { "width": 320, "height": 480, "density": "ldpi" },
+          { "width": 480, "height": 800, "density": "mdpi" },
+          { "width": 720, "height": 1280, "density": "hdpi" },
+          { "width": 1080, "height": 1920, "density": "xhdpi" },
+          { "width": 1440, "height": 2560, "density": "xxhdpi" },
+          { "width": 1920, "height": 3840, "density": "xxxhdpi" }
+        ]
+      }
+    }
+  }
+}
