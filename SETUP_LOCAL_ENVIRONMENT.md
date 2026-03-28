@@ -3,67 +3,67 @@
 ## Prerequisites
 
 ### Windows
-```bash
+\`\`\`bash
 # Install Chocolatey first (https://chocolatey.org/install)
 # Then run in PowerShell as Administrator:
 
 choco install jdk11
 choco install android-sdk
-```
+\`\`\`
 
 ### macOS
-```bash
+\`\`\`bash
 brew install openjdk@11
 brew install android-sdk
 brew install gradle
-```
+\`\`\`
 
 ### Linux (Ubuntu/Debian)
-```bash
+\`\`\`bash
 sudo apt-get install openjdk-11-jdk
 sudo apt-get install android-sdk
-```
+\`\`\`
 
 ## After Download & Extract
 
 ### 1. Install Dependencies
-```bash
+\`\`\`bash
 npm install
-```
+\`\`\`
 
 ### 2. Create Capacitor Platforms
-```bash
+\`\`\`bash
 # Initialize Android platform
 npx cap add android
 
 # Sync web build to Android
 npm run build
 npm run capacitor:sync
-```
+\`\`\`
 
 ### 3. Set Environment Variables
 Copy your `.env.production.example` to `.env.production`:
-```bash
+\`\`\`bash
 cp .env.production.example .env.production
-```
+\`\`\`
 
 Update with your Supabase credentials:
-```
+\`\`\`
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-```
+\`\`\`
 
 ### 4. Generate Android Signing Key
-```bash
+\`\`\`bash
 # Create keystore for signing APK
 keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-key-alias
 
 # Save this file safely! You'll need it for app updates
-```
+\`\`\`
 
 ### 5. Configure Android Signing
 Create `android/app/build.gradle` signing config:
-```gradle
+\`\`\`gradle
 signingConfigs {
     release {
         storeFile file("../my-release-key.jks")
@@ -78,10 +78,10 @@ buildTypes {
         signingConfig signingConfigs.release
     }
 }
-```
+\`\`\`
 
 ### 6. Build Android APK
-```bash
+\`\`\`bash
 # Build release APK
 cd android
 ./gradlew assembleRelease
@@ -91,10 +91,10 @@ cd android
 
 # Find your APK at: android/app/build/outputs/apk/release/app-release.apk
 # Find your AAB at: android/app/build/outputs/bundle/release/app-release.aab
-```
+\`\`\`
 
 ### 7. Test on Device/Emulator
-```bash
+\`\`\`bash
 # Debug build (for testing)
 cd android
 ./gradlew installDebug
@@ -102,7 +102,7 @@ cd android
 # Or open in Android Studio
 open android (macOS)
 start android (Windows)
-```
+\`\`\`
 
 ## Environment Variables Needed
 - `NEXT_PUBLIC_SUPABASE_URL`

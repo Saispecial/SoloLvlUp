@@ -16,34 +16,34 @@ Get your RPG app running on Android in under 10 minutes!
 
 ### 1. Build Next.js App
 
-```bash
+\`\`\`bash
 npm install
 npm run build
-```
+\`\`\`
 
 This creates the `out/` folder with your static site.
 
 ### 2. Add Android Platform
 
-```bash
+\`\`\`bash
 npx cap add android
-```
+\`\`\`
 
 This creates the `android/` folder with the complete Android Studio project.
 
 ### 3. Sync Files to Android
 
-```bash
+\`\`\`bash
 npm run capacitor:sync
-```
+\`\`\`
 
 This copies your Next.js build to the Android project.
 
 ### 4. Open in Android Studio
 
-```bash
+\`\`\`bash
 npm run capacitor:open:android
-```
+\`\`\`
 
 Android Studio will open automatically.
 
@@ -56,9 +56,9 @@ In Android Studio:
 
 **OR** use CLI:
 
-```bash
+\`\`\`bash
 npm run capacitor:build:android
-```
+\`\`\`
 
 ---
 
@@ -95,9 +95,9 @@ npm run capacitor:build:android
 
 **Issue:** Android Studio won't open
 **Fix:** Set ANDROID_HOME environment variable:
-```bash
+\`\`\`bash
 export ANDROID_HOME=$HOME/Library/Android/sdk
-```
+\`\`\`
 
 ---
 
