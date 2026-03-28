@@ -3,31 +3,31 @@
 ## Environment Variables
 Your existing `.env.local` will be automatically available. Capacitor uses the same environment system:
 
-```bash
+\`\`\`bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
-```
+\`\`\`
 
 These will be baked into the static export during the build process.
 
 ## Build & Deploy for Mobile
 
 ### iOS Setup
-```bash
+\`\`\`bash
 npm run build
 npm run capacitor:copy
 npm run capacitor:open:ios
-```
+\`\`\`
 Then in Xcode:
 - Select your team and signing certificate
 - Build and run on device/simulator
 
 ### Android Setup
-```bash
+\`\`\`bash
 npm run build
 npm run capacitor:sync
 npm run capacitor:open:android
-```
+\`\`\`
 Then in Android Studio:
 - Select an emulator or connected device
 - Click Run
@@ -59,12 +59,12 @@ Then in Android Studio:
 - Add native haptics for quest completion feedback
 
 ## Testing
-```bash
+\`\`\`bash
 # Test on iOS simulator
 npm run capacitor:build:ios
 
 # Test on Android emulator
 npm run capacitor:build:android
-```
+\`\`\`
 
 Your backend authentication and all other API endpoints remain unchanged!

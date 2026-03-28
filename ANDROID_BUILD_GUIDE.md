@@ -12,7 +12,7 @@
 
 ### 1. Initialize Android Project
 
-```bash
+\`\`\`bash
 # Install dependencies
 npm install
 
@@ -24,7 +24,7 @@ npx cap add android
 
 # Sync files to Android
 npm run capacitor:sync
-```
+\`\`\`
 
 This creates the `android/` folder with all necessary Android project files.
 
@@ -34,7 +34,7 @@ This creates the `android/` folder with all necessary Android project files.
 
 The Android manifest (`android/app/src/main/AndroidManifest.xml`) will be auto-generated. Key settings:
 
-```xml
+\`\`\`xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -71,7 +71,7 @@ The Android manifest (`android/app/src/main/AndroidManifest.xml`) will be auto-g
         </activity>
     </application>
 </manifest>
-```
+\`\`\`
 
 ---
 
@@ -79,7 +79,7 @@ The Android manifest (`android/app/src/main/AndroidManifest.xml`) will be auto-g
 
 ### Development Build (Debug APK)
 
-```bash
+\`\`\`bash
 # Open in Android Studio
 npm run capacitor:open:android
 
@@ -88,16 +88,16 @@ cd android
 ./gradlew assembleDebug
 
 # Output: android/app/build/outputs/apk/debug/app-debug.apk
-```
+\`\`\`
 
 **Test on device/emulator:**
-```bash
+\`\`\`bash
 # Run on connected device
 npm run capacitor:build:android
 
 # Or manually install APK
 adb install android/app/build/outputs/apk/debug/app-debug.apk
-```
+\`\`\`
 
 ---
 
@@ -105,7 +105,7 @@ adb install android/app/build/outputs/apk/debug/app-debug.apk
 
 #### 1. Generate Signing Key
 
-```bash
+\`\`\`bash
 # Navigate to android/app
 cd android/app
 
@@ -116,18 +116,18 @@ keytool -genkey -v -keystore sololvlup-release.jks \
 
 # Enter details when prompted
 # Store password securely!
-```
+\`\`\`
 
 #### 2. Configure Signing in Android Studio
 
 Create `android/app/keystore.properties`:
 
-```properties
+\`\`\`properties
 storePassword=YOUR_KEYSTORE_PASSWORD
 keyPassword=YOUR_KEY_PASSWORD
 keyAlias=sololvlup-key
 storeFile=sololvlup-release.jks
-```
+\`\`\`
 
 **IMPORTANT:** Add `keystore.properties` to `.gitignore`!
 
@@ -135,17 +135,17 @@ storeFile=sololvlup-release.jks
 
 Add before `android` block:
 
-```gradle
+\`\`\`gradle
 def keystorePropertiesFile = rootProject.file("app/keystore.properties")
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
-```
+\`\`\`
 
 Add inside `android` block:
 
-```gradle
+\`\`\`gradle
 signingConfigs {
     release {
         keyAlias keystoreProperties['keyAlias']
@@ -162,25 +162,25 @@ buildTypes {
         proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
     }
 }
-```
+\`\`\`
 
 #### 4. Build Release APK
 
-```bash
+\`\`\`bash
 cd android
 ./gradlew assembleRelease
 
 # Output: android/app/build/outputs/apk/release/app-release.apk
-```
+\`\`\`
 
 #### 5. Build Release AAB (for Google Play)
 
-```bash
+\`\`\`bash
 cd android
 ./gradlew bundleRelease
 
 # Output: android/app/build/outputs/bundle/release/app-release.aab
-```
+\`\`\`
 
 ---
 
@@ -190,7 +190,7 @@ cd android
 
 Create `android/app/src/main/assets/capacitor.config.json`:
 
-```json
+\`\`\`json
 {
   "appId": "com.sololvlup.app",
   "appName": "SoloLvlUp",
@@ -201,21 +201,21 @@ Create `android/app/src/main/assets/capacitor.config.json`:
     }
   }
 }
-```
+\`\`\`
 
 Then in your Next.js app, access environment variables at build time:
 
-```typescript
+\`\`\`typescript
 // Build-time env vars are baked into the static export
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-```
+\`\`\`
 
 ### Option 2: Runtime Configuration
 
 Use Capacitor Preferences to store API keys after app launch:
 
-```typescript
+\`\`\`typescript
 import { Preferences } from '@capacitor/preferences'
 
 // Store at runtime
@@ -226,7 +226,7 @@ await Preferences.set({
 
 // Retrieve
 const { value } = await Preferences.get({ key: 'supabase_url' })
-```
+\`\`\`
 
 ---
 
@@ -234,18 +234,18 @@ const { value } = await Preferences.get({ key: 'supabase_url' })
 
 ### 1. Test on Physical Device
 
-```bash
+\`\`\`bash
 # Enable USB debugging on Android device
 # Connect via USB
 adb devices
 
 # Install and run
 npm run capacitor:build:android
-```
+\`\`\`
 
 ### 2. Test on Android Emulator
 
-```bash
+\`\`\`bash
 # Create emulator in Android Studio
 # AVD Manager → Create Virtual Device
 # Select device (Pixel 6) and API 33+
@@ -255,15 +255,15 @@ emulator -avd Pixel_6_API_33
 
 # Deploy app
 npm run capacitor:build:android
-```
+\`\`\`
 
 ### 3. Test Deep Links (OAuth)
 
-```bash
+\`\`\`bash
 # Test auth callback
 adb shell am start -W -a android.intent.action.VIEW \
   -d "sololvlup://auth/callback?code=test"
-```
+\`\`\`
 
 ---
 
@@ -310,30 +310,30 @@ Required:
 
 Update version in `android/app/build.gradle`:
 
-```gradle
+\`\`\`gradle
 android {
     defaultConfig {
         versionCode 2        // Increment for each release
         versionName "1.0.1"  // User-facing version
     }
 }
-```
+\`\`\`
 
 Also update `package.json`:
 
-```json
+\`\`\`json
 {
   "version": "1.0.1"
 }
-```
+\`\`\`
 
 Then rebuild:
 
-```bash
+\`\`\`bash
 npm run build
 npm run capacitor:sync
 cd android && ./gradlew bundleRelease
-```
+\`\`\`
 
 ---
 
@@ -341,19 +341,19 @@ cd android && ./gradlew bundleRelease
 
 ### 1. Build Fails: "SDK not found"
 
-```bash
+\`\`\`bash
 # Set ANDROID_HOME in ~/.bashrc or ~/.zshrc
 export ANDROID_HOME=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
-```
+\`\`\`
 
 ### 2. Cleartext HTTP Not Allowed
 
 Add to `AndroidManifest.xml`:
 
-```xml
+\`\`\`xml
 <application android:usesCleartextTraffic="true">
-```
+\`\`\`
 
 Or use `android:scheme="https"` in `capacitor.config.ts`.
 
@@ -368,11 +368,11 @@ Check:
 
 Remember: Use `NEXT_PUBLIC_` prefix for client-side variables:
 
-```bash
+\`\`\`bash
 # .env.production
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxx...
-```
+\`\`\`
 
 Then rebuild with `npm run build`.
 
@@ -384,15 +384,15 @@ Then rebuild with `npm run build`.
 
 Already configured in release build. To customize, edit `android/app/proguard-rules.pro`:
 
-```proguard
+\`\`\`proguard
 # Keep Capacitor classes
 -keep class com.getcapacitor.** { *; }
 -keep class com.sololvlup.app.** { *; }
-```
+\`\`\`
 
 ### Reduce APK Size
 
-```gradle
+\`\`\`gradle
 android {
     splits {
         abi {
@@ -403,7 +403,7 @@ android {
         }
     }
 }
-```
+\`\`\`
 
 This creates separate APKs for each architecture, reducing individual size.
 
@@ -427,7 +427,7 @@ This creates separate APKs for each architecture, reducing individual size.
 
 ## Useful Commands
 
-```bash
+\`\`\`bash
 # Clean build
 cd android && ./gradlew clean
 
@@ -442,7 +442,7 @@ adb uninstall com.sololvlup.app
 
 # Check APK size
 ls -lh android/app/build/outputs/apk/release/app-release.apk
-```
+\`\`\`
 
 ---
 

@@ -4,10 +4,10 @@
 The Supabase project is experiencing SMTP authentication errors when sending confirmation emails. This prevents users from receiving verification emails after signup.
 
 ## Error Details
-```
+\`\`\`
 Error: 535 5.7.8 Error: authentication failed
 Message: Error sending confirmation email
-```
+\`\`\`
 
 ## Solutions
 
@@ -78,10 +78,10 @@ After configuring SMTP:
 
 If issues persist, users can be manually verified using SQL:
 
-```sql
+\`\`\`sql
 UPDATE auth.users 
 SET email_confirmed_at = now() 
 WHERE email = 'user@example.com';
-```
+\`\`\`
 
 **Note:** Only use for legitimate users after verifying their identity.

@@ -5,10 +5,10 @@
 ### Deploy to Vercel (Recommended)
 
 1. **Connect GitHub Repository**
-   ```bash
+   \`\`\`bash
    # Push your code to GitHub
    git push origin main
-   ```
+   \`\`\`
 
 2. **Create Vercel Account**
    - Go to vercel.com
@@ -23,10 +23,10 @@
 4. **Set Environment Variables**
    - Go to Project Settings → Environment Variables
    - Add all variables from your `.env.local`:
-     ```
+     \`\`\`
      NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
      NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-     ```
+     \`\`\`
 
 5. **Deploy**
    - Click "Deploy"
@@ -35,7 +35,7 @@
 
 ### Deploy to Netlify
 
-```bash
+\`\`\`bash
 # Install Netlify CLI
 npm install -g netlify-cli
 
@@ -44,7 +44,7 @@ npm run build
 
 # Deploy
 netlify deploy --prod
-```
+\`\`\`
 
 ---
 
@@ -57,7 +57,7 @@ netlify deploy --prod
 
 ### Step 1: Prepare iOS Build
 
-```bash
+\`\`\`bash
 # Build Next.js static export
 npm run build
 
@@ -66,7 +66,7 @@ npm run capacitor:sync
 
 # Open Xcode
 npm run capacitor:open:ios
-```
+\`\`\`
 
 ### Step 2: Configure Signing (Xcode)
 
@@ -78,13 +78,13 @@ npm run capacitor:open:ios
 
 ### Step 3: Build & Archive
 
-```bash
+\`\`\`bash
 # In Xcode:
 # 1. Product → Destination → "Generic iOS Device"
 # 2. Product → Archive
 # 3. Distribute App → App Store Connect
 # 4. Follow signing prompts
-```
+\`\`\`
 
 ### Step 4: Submit to App Store
 
@@ -95,14 +95,14 @@ npm run capacitor:open:ios
 
 ### Beta Testing with TestFlight (Easier First Step)
 
-```bash
+\`\`\`bash
 # After archiving:
 # 1. In Xcode Organizer, click "Distribute App"
 # 2. Select "TestFlight"
 # 3. Upload to TestFlight
 # 4. Add testers via email
 # 5. They install via TestFlight app
-```
+\`\`\`
 
 ---
 
@@ -115,7 +115,7 @@ npm run capacitor:open:ios
 
 ### Step 1: Create Signing Key
 
-```bash
+\`\`\`bash
 # Generate keystore for signing
 keytool -genkey -v -keystore my-release-key.jks \
   -keyalg RSA -keysize 2048 -validity 10000 \
@@ -123,11 +123,11 @@ keytool -genkey -v -keystore my-release-key.jks \
 
 # Move keystore to project
 mv my-release-key.jks android/app/
-```
+\`\`\`
 
 ### Step 2: Prepare Android Build
 
-```bash
+\`\`\`bash
 # Build Next.js
 npm run build
 
@@ -136,7 +136,7 @@ npm run capacitor:sync
 
 # Open Android Studio
 npm run capacitor:open:android
-```
+\`\`\`
 
 ### Step 3: Build Signed APK/AAB
 
@@ -165,7 +165,7 @@ In Android Studio:
 
 ### iOS App
 - Add to `capacitor.config.ts`:
-```typescript
+\`\`\`typescript
 const config: CapacitorConfig = {
   appId: 'com.yourcompany.sololevelup',
   appName: 'SoloLvlUp',
@@ -176,7 +176,7 @@ const config: CapacitorConfig = {
     },
   },
 }
-```
+\`\`\`
 
 ### Android App
 - Handled automatically via `capacitor.config.ts`
