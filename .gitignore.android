@@ -1,0 +1,24 @@
+# Android Studio / Gradle
+android/.gradle/
+android/.idea/
+android/local.properties
+android/build/
+android/app/build/
+android/captures/
+android/*.iml
+android/.externalNativeBuild
+android/.cxx/
+
+# Keystore files (NEVER COMMIT THESE!)
+android/app/*.jks
+android/app/*.keystore
+android/app/keystore.properties
+android/app/release-key.jks
+android/app/debug-key.jks
+
+# Generated files
+android/.DS_Store
+android/out/
+
+# Capacitor
+android/app/src/main/assets/public/
